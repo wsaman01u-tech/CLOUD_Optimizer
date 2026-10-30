@@ -9,3 +9,4 @@ ec2-prod-web-oversized-07,Legacy Web App Front,AWS,us-east-1,t3.2xlarge,8,32.0,1
 azure-vm-prod-analytics-08,Synapse Telemetry Ingest,Azure,eastus,Standard_D8s_v3,8,32.0,13.2%,18.9%,22.0%,500,$280.32,production,over_provisioned
 gcp-prod-catalog-service-09,Catalog Microservice Pool,GCP,us-central1,e2-standard-8,8,32.0,12.5%,17.8%,20.4%,300,$195.20,production,over_provisioned
 ec2-prod-notification-svc-10,Email Notification Worker,AWS,eu-central-1,t3.xlarge,4,16.0,14.1%,19.2%,24.0%,100,$119.81,production,over_provisioned
+

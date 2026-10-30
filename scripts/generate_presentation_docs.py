@@ -388,3 +388,4 @@ docx_cmd = [
 ]
 subprocess.run(docx_cmd, check=True)
 print("Generated Word (DOCX): testing/CloudOptimizer_App_Guide_and_Architecture.docx")
+
