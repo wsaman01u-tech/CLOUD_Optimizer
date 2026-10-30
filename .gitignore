@@ -11,5 +11,6 @@ data/uploads/*
 !data/uploads/.gitkeep
 outputs/test_*
 outputs/terraform_plan.tf
+.netlify/
 
 
