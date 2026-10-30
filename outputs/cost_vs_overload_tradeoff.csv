@@ -1,0 +1,4 @@
+Strategy,Total Cores Allocated,Total Spend ($),Spend Reduction (%),Overload Hours (>90% CPU),Overload Rate (%)
+1. No Optimization (As-Is),1454,998.03,0.0,0,0.0
+2. Baseline Sizing (Moving Avg),1063,729.64,26.89,0,0.0
+3. Model-Based Sizing (LightGBM Forecaster),1062,728.96,26.96,1,0.01

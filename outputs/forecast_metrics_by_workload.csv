@@ -1,0 +1,21 @@
+Workload Type,VM Count,Model,MAE,RMSE,sMAPE (%),Accuracy (%)
+Steady,75,Naive (last hour),1.036,1.311,2.47,97.53
+Steady,75,Seasonal Naive (same hour last week),0.971,1.222,2.31,97.69
+Steady,75,Moving Average (24h),1.608,1.891,3.82,96.18
+Steady,75,Random Forest,0.784,0.992,1.87,98.13
+Steady,75,LightGBM,0.793,0.999,1.89,98.11
+Daily Peak,75,Naive (last hour),4.321,4.898,11.58,88.42
+Daily Peak,75,Seasonal Naive (same hour last week),1.318,1.647,3.81,96.19
+Daily Peak,75,Moving Average (24h),14.961,16.789,37.43,62.57
+Daily Peak,75,Random Forest,1.118,1.415,3.18,96.82
+Daily Peak,75,LightGBM,1.129,1.428,3.22,96.78
+Bursty,75,Naive (last hour),2.134,3.206,13.7,86.3
+Bursty,75,Seasonal Naive (same hour last week),2.085,3.153,13.36,86.64
+Bursty,75,Moving Average (24h),1.568,2.281,10.34,89.66
+Bursty,75,Random Forest,1.727,2.331,11.48,88.52
+Bursty,75,LightGBM,1.606,2.275,10.65,89.35
+Mostly Idle,75,Naive (last hour),0.476,0.595,17.3,82.7
+Mostly Idle,75,Seasonal Naive (same hour last week),0.469,0.59,17.06,82.94
+Mostly Idle,75,Moving Average (24h),0.344,0.43,12.53,87.47
+Mostly Idle,75,Random Forest,0.343,0.427,12.45,87.55
+Mostly Idle,75,LightGBM,0.34,0.425,12.39,87.61

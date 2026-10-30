@@ -7,4 +7,9 @@ __pycache__/
 node_modules/
 data/raw/*
 !data/raw/.gitkeep
+data/uploads/*
+!data/uploads/.gitkeep
+outputs/test_*
+outputs/terraform_plan.tf
+
 

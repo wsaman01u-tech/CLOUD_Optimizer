@@ -1,0 +1,6 @@
+Model,MAE,RMSE,sMAPE (%),Accuracy (%),Beats Naive
+Naive (last hour),1.992,3.014,11.26,88.74,Baseline
+Seasonal Naive (same hour last week),1.211,1.904,9.14,90.86,YES
+Moving Average (24h),4.62,8.527,16.03,83.97,NO
+Random Forest,0.993,1.466,7.25,92.75,YES
+LightGBM,0.967,1.449,7.04,92.96,YES

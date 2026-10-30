@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 
 from simulator.env import CloudEnv
 from agents.monitor import summarize_vms, compute_fleet_kpis
-from agents.forecast import rmse, mape, mae, Forecaster
+from agents.forecast import rmse, mape, mae, Forecaster, forecast
 from agents.optimizer import static_policy, threshold_policy, train_q_learning, q_policy, evaluate_policy
 from agents.deploy import DeploymentAgent
 from agents.audit import explain_decision, AuditAgent
@@ -102,6 +102,41 @@ def test_forecaster_fit_and_predict():
     next_demand = fc.predict_next(history)
     assert isinstance(next_demand, float)
     assert next_demand > 0
+
+
+def test_production_forecast_function():
+    """Verify new forecast(resource_id, horizon) returns required structure and metrics."""
+    res = forecast(resource_id="ec2-prod-web-01", horizon=24)
+    assert "predicted_value" in res
+    assert "lower_band" in res
+    assert "upper_band" in res
+    assert "model_name" in res
+    assert "model_version" in res
+    assert "error_metrics" in res
+    assert res["model_name"] == "LightGBM_Demand_Forecaster"
+    assert res["model_version"] == "v2.0.0"
+    assert "MAE" in res["error_metrics"]
+    assert "sMAPE" in res["error_metrics"]
+    assert len(res["points"]) == 24
+    assert res["upper_band"] >= res["predicted_value"] >= res["lower_band"]
+
+
+def test_forecast_api_endpoints():
+    """Verify backend forecast endpoints return correct data."""
+    client = TestClient(app)
+    # Direct forecast endpoint
+    resp = client.get("/api/v2/forecast/ec2-prod-web-01?horizon=24")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["model_name"] == "LightGBM_Demand_Forecaster"
+    assert len(data["points"]) == 24
+
+    # Server detail view with 7-day forecast
+    resp_server = client.get("/api/v2/servers/ec2-prod-web-01")
+    assert resp_server.status_code == 200
+    s_data = resp_server.json()
+    assert "forecast" in s_data
+    assert "points" in s_data["forecast"]
 
 
 # -------------------------------------------------------------
@@ -204,4 +239,45 @@ def test_fastapi_auth_login_and_me():
     res_me = client.get("/api/auth/me")
     assert res_me.status_code == 200
     assert "user" in res_me.json()
+
+
+def test_fastapi_profile_update_and_storage_upload():
+    """Verify profile updates, password change, and file storage uploads."""
+    client = TestClient(app)
+
+    # 1. Profile Update
+    update_payload = {
+        "name": "Sarah Connor",
+        "email": "sarah.connor@cyberdyne.cloud",
+        "role": "Principal FinOps Architect",
+        "organization": "Skynet Defense Systems",
+        "preferences": {
+            "email_alerts_high_risk": True,
+            "weekly_digest": True,
+        }
+    }
+    res_prof = client.post("/api/auth/profile", json=update_payload)
+    assert res_prof.status_code == 200
+    user_data = res_prof.json()["user"]
+    assert user_data["name"] == "Sarah Connor"
+    assert user_data["email"] == "sarah.connor@cyberdyne.cloud"
+    assert user_data["role"] == "Principal FinOps Architect"
+    assert user_data["preferences"]["weekly_digest"] is True
+
+    # 2. Password Change
+    res_pass = client.post("/api/auth/password", json={"new_password": "secureNewPassword123!"})
+    assert res_pass.status_code == 200
+    assert res_pass.json()["status"] == "success"
+
+    # 3. Storage Upload
+    file_content = b"timestamp,resource_id,cpu_utilization\n1700000000,server-1,45.2\n"
+    res_upload = client.post(
+        "/api/storage/upload",
+        files={"file": ("test_trace.csv", file_content, "text/csv")}
+    )
+    assert res_upload.status_code == 200
+    up_data = res_upload.json()
+    assert up_data["status"] == "success"
+    assert up_data["filename"] == "test_trace.csv"
+    assert up_data["size_bytes"] == len(file_content)
 

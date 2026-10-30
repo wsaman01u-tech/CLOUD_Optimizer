@@ -1,4 +1,4 @@
-strategy,total_cost,sla_violations,sla_compliance_pct,avg_utilization_pct,cost_savings_pct
-Static Allocation (Fixed 8),808.0,0,100.0,65.49,0.0
-Reactive Threshold (30/70%),954.0,1,99.01,56.26,-18.07
-Autonomous RL Optimizer (Q-Learning + Forecast),632.0,1,99.01,83.18,21.78
+Strategy,Total Cores Allocated,Total Spend ($),Spend Reduction (%),Overload Hours (>90% CPU),Overload Rate (%)
+1. No Optimization (As-Is),1454,998.03,0.0,0,0.0
+2. Baseline Sizing (Moving Avg),1063,729.64,26.89,0,0.0
+3. Model-Based Sizing (LightGBM Forecaster),1062,728.96,26.96,1,0.01

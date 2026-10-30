@@ -1,0 +1,41 @@
+{
+  "model_name": "LightGBM_Demand_Forecaster",
+  "model_version": "v2.0.0",
+  "feature_cols": [
+    "lag_1h",
+    "lag_2h",
+    "lag_24h",
+    "lag_168h",
+    "rolling_mean_6h",
+    "rolling_max_6h",
+    "rolling_std_6h",
+    "rolling_mean_24h",
+    "rolling_max_24h",
+    "rolling_std_24h",
+    "rolling_mean_168h",
+    "rolling_max_168h",
+    "rolling_std_168h",
+    "trend_7d",
+    "hour_sin",
+    "hour_cos",
+    "day_of_week",
+    "is_weekend",
+    "core_count",
+    "memory_gb",
+    "cat_Delay-insensitive",
+    "cat_Interactive",
+    "cat_Unknown"
+  ],
+  "target_col": "hourly_avg_cpu",
+  "split_hours": {
+    "start": 168,
+    "train_end": 318,
+    "val_end": 350,
+    "test_end": 383
+  },
+  "uncertainty_band": {
+    "q10_res": -1.457398054682366,
+    "q90_res": 1.579178043346924,
+    "res_std": 1.4552400826995229
+  }
+}
