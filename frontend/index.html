@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Autonomous Cloud Cost & Performance Optimizer</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            },
+            dark: {
+              800: '#1e293b',
+              900: '#0f172a',
+              950: '#020617',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Chart.js 4 -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    /* Custom scrollbars */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+  </style>
+</head>
+<body class="bg-dark-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-indigo-500 selection:text-white">
+
+  <!-- Top Navigation Header -->
+  <header class="border-b border-slate-800 bg-dark-900/90 backdrop-blur sticky top-0 z-50 px-4 lg:px-8 py-3.5">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="p-2 bg-indigo-600/20 text-indigo-400 rounded-lg border border-indigo-500/30">
+          <i data-lucide="cloud-lightning" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+            Autonomous Cloud Cost Optimizer
+            <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Production Ready
+            </span>
+          </h1>
+          <p class="text-xs text-slate-400">Multi-Agent RL Autoscaling & Rightsizing Engine</p>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="flex items-center space-x-1 bg-slate-900/80 p-1 rounded-xl border border-slate-800 text-sm overflow-x-auto">
+        <button onclick="switchTab('overview')" id="tab-overview" class="tab-btn px-3.5 py-1.5 rounded-lg font-medium transition-all text-white bg-indigo-600 shadow-sm flex items-center gap-1.5">
+          <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Overview
+        </button>
+        <button onclick="switchTab('usage')" id="tab-usage" class="tab-btn px-3.5 py-1.5 rounded-lg font-medium transition-all text-slate-400 hover:text-white flex items-center gap-1.5">
+          <i data-lucide="server" class="w-4 h-4"></i> Fleet Usage
+        </button>
+        <button onclick="switchTab('forecast')" id="tab-forecast" class="tab-btn px-3.5 py-1.5 rounded-lg font-medium transition-all text-slate-400 hover:text-white flex items-center gap-1.5">
+          <i data-lucide="trending-up" class="w-4 h-4"></i> Forecast
+        </button>
+        <button onclick="switchTab('decisions')" id="tab-decisions" class="tab-btn px-3.5 py-1.5 rounded-lg font-medium transition-all text-slate-400 hover:text-white flex items-center gap-1.5">
+          <i data-lucide="cpu" class="w-4 h-4"></i> Decisions & Audit
+        </button>
+        <button onclick="switchTab('evaluation')" id="tab-evaluation" class="tab-btn px-3.5 py-1.5 rounded-lg font-medium transition-all text-slate-400 hover:text-white flex items-center gap-1.5">
+          <i data-lucide="bar-chart-2" class="w-4 h-4"></i> Evaluation
+        </button>
+        <button onclick="switchTab('deployment')" id="tab-deployment" class="tab-btn px-3.5 py-1.5 rounded-lg font-medium transition-all text-slate-400 hover:text-white flex items-center gap-1.5">
+          <i data-lucide="terminal" class="w-4 h-4"></i> IaC Deploy
+        </button>
+        <button onclick="switchTab('simulator')" id="tab-simulator" class="tab-btn px-3.5 py-1.5 rounded-lg font-medium transition-all text-amber-400 hover:text-amber-300 flex items-center gap-1.5">
+          <i data-lucide="play" class="w-4 h-4"></i> Live Test
+        </button>
+      </nav>
+
+      <!-- Status Indicator & Reload Button -->
+      <div class="flex items-center gap-2">
+        <button onclick="loadAllData()" title="Reload data" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition">
+          <i data-lucide="refresh-cw" class="w-4 h-4" id="refresh-icon"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Notification Banner for Free Hosting Sleep -->
+  <div id="hosting-notice" class="bg-indigo-950/60 border-b border-indigo-900/50 px-4 py-2 text-xs text-indigo-300 flex items-center justify-center gap-2">
+    <i data-lucide="info" class="w-4 h-4 text-indigo-400"></i>
+    <span>Autonomous agents synchronize in real time. If accessing over public hosting, server spin-up may take up to 60 seconds on initial wake.</span>
+  </div>
+
+  <!-- Loading State Banner -->
+  <div id="loading-spinner" class="hidden max-w-7xl mx-auto w-full px-4 pt-4">
+    <div class="bg-indigo-950/40 border border-indigo-800/50 rounded-xl p-4 text-center text-sm text-indigo-300 flex items-center justify-center gap-3">
+      <div class="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+      <span>Querying agent endpoints and loading saved telemetry...</span>
+    </div>
+  </div>
+
+  <!-- Main Content Container -->
+  <main class="max-w-7xl mx-auto w-full px-4 lg:px-8 py-6 flex-1">
+
+    <!-- TAB 1: OVERVIEW -->
+    <section id="view-overview" class="tab-view space-y-6">
+      <!-- KPI Row -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Card 1 -->
+        <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5 hover:border-slate-700 transition relative overflow-hidden">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Cloud Cost Reduction</p>
+              <h3 id="kpi-savings-pct" class="text-3xl font-extrabold text-emerald-400 mt-1">--%</h3>
+              <p id="kpi-cost-saved-usd" class="text-xs text-slate-400 mt-1">Saved $-- vs Static</p>
+            </div>
+            <div class="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/20">
+              <i data-lucide="wallet" class="w-5 h-5"></i>
+            </div>
+          </div>
+          <div class="mt-3 w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+            <div id="kpi-savings-bar" class="bg-emerald-500 h-full rounded-full" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5 hover:border-slate-700 transition relative overflow-hidden">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">SLA Compliance</p>
+              <h3 id="kpi-sla-compliance" class="text-3xl font-extrabold text-indigo-400 mt-1">--%</h3>
+              <p id="kpi-sla-violations" class="text-xs text-slate-400 mt-1">0 Breach Events</p>
+            </div>
+            <div class="p-3 bg-indigo-500/10 text-indigo-400 rounded-xl border border-indigo-500/20">
+              <i data-lucide="shield-check" class="w-5 h-5"></i>
+            </div>
+          </div>
+          <div class="mt-3 w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+            <div id="kpi-sla-bar" class="bg-indigo-500 h-full rounded-full" style="width: 98%"></div>
+          </div>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5 hover:border-slate-700 transition relative overflow-hidden">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Idle Waste Detected</p>
+              <h3 id="kpi-idle-vms" class="text-3xl font-extrabold text-rose-400 mt-1">-- VMs</h3>
+              <p id="kpi-idle-waste-usd" class="text-xs text-slate-400 mt-1">$-- total waste</p>
+            </div>
+            <div class="p-3 bg-rose-500/10 text-rose-400 rounded-xl border border-rose-500/20">
+              <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+            </div>
+          </div>
+          <div class="mt-3 w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+            <div class="bg-rose-500 h-full rounded-full" style="width: 45%"></div>
+          </div>
+        </div>
+
+        <!-- Card 4 -->
+        <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5 hover:border-slate-700 transition relative overflow-hidden">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Active Scaling Fleet</p>
+              <h3 id="kpi-active-servers" class="text-3xl font-extrabold text-blue-400 mt-1">-- Replicas</h3>
+              <p class="text-xs text-slate-400 mt-1">Capacity: 100 units/server</p>
+            </div>
+            <div class="p-3 bg-blue-500/10 text-blue-400 rounded-xl border border-blue-500/20">
+              <i data-lucide="layers" class="w-5 h-5"></i>
+            </div>
+          </div>
+          <div class="mt-3 w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+            <div class="bg-blue-500 h-full rounded-full" style="width: 60%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Row -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Cost Comparison Chart -->
+        <div class="lg:col-span-2 bg-dark-900 border border-slate-800 rounded-2xl p-5">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h4 class="font-bold text-white text-base">Autoscaling Benchmark Comparison</h4>
+              <p class="text-xs text-slate-400">Total Infrastructure Spend ($) Across Scaling Strategies</p>
+            </div>
+            <span class="text-xs px-2.5 py-1 rounded-lg bg-indigo-950 text-indigo-300 border border-indigo-800 font-mono">Test Workload</span>
+          </div>
+          <div class="h-64">
+            <canvas id="overviewCostChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Fleet Efficiency Breakdown -->
+        <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
+          <div>
+            <h4 class="font-bold text-white text-base">Cloud Fleet Classification</h4>
+            <p class="text-xs text-slate-400 mb-4">VM Distribution from Monitoring Agent</p>
+            <div class="h-48 flex items-center justify-center">
+              <canvas id="overviewDonutChart"></canvas>
+            </div>
+          </div>
+          <div class="grid grid-cols-3 gap-2 text-center pt-3 border-t border-slate-800 text-xs">
+            <div>
+              <span class="block text-emerald-400 font-bold text-sm" id="donut-optimal-cnt">--</span>
+              <span class="text-slate-400">Optimal</span>
+            </div>
+            <div>
+              <span class="block text-rose-400 font-bold text-sm" id="donut-idle-cnt">--</span>
+              <span class="text-slate-400">Idle</span>
+            </div>
+            <div>
+              <span class="block text-amber-400 font-bold text-sm" id="donut-overprov-cnt">--</span>
+              <span class="text-slate-400">Overprov.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- System Architecture & Agent Summary Card -->
+      <div class="bg-dark-900 border border-slate-800 rounded-2xl p-6">
+        <h4 class="font-bold text-white text-base mb-3 flex items-center gap-2">
+          <i data-lucide="network" class="w-5 h-5 text-indigo-400"></i> Autonomous Multi-Agent Operational Architecture
+        </h4>
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-3 text-xs">
+          <div class="p-3.5 bg-slate-950/70 border border-slate-800 rounded-xl space-y-1.5">
+            <div class="flex items-center gap-2 text-indigo-400 font-semibold">
+              <i data-lucide="eye" class="w-4 h-4"></i> 1. Monitoring
+            </div>
+            <p class="text-slate-300">Scans CPU & memory across VMs. Flags idle machines (&lt;10% CPU &gt;90% time) and over-provisioned boxes.</p>
+          </div>
+          <div class="p-3.5 bg-slate-950/70 border border-slate-800 rounded-xl space-y-1.5">
+            <div class="flex items-center gap-2 text-emerald-400 font-semibold">
+              <i data-lucide="line-chart" class="w-4 h-4"></i> 2. Forecaster
+            </div>
+            <p class="text-slate-300">Supervised Random Forest with 24h lag features. Predicts upcoming demand cycles with low RMSE.</p>
+          </div>
+          <div class="p-3.5 bg-slate-950/70 border border-slate-800 rounded-xl space-y-1.5">
+            <div class="flex items-center gap-2 text-amber-400 font-semibold">
+              <i data-lucide="cpu" class="w-4 h-4"></i> 3. Optimizer
+            </div>
+            <p class="text-slate-300">Q-Learning RL agent in state space (load, forecast, servers). Minimizes compute bill while guarding SLA.</p>
+          </div>
+          <div class="p-3.5 bg-slate-950/70 border border-slate-800 rounded-xl space-y-1.5">
+            <div class="flex items-center gap-2 text-blue-400 font-semibold">
+              <i data-lucide="box" class="w-4 h-4"></i> 4. Deployment
+            </div>
+            <p class="text-slate-300">Enforces safety clamping (1-10 replicas, max +/-1 delta). Generates Terraform IaC &amp; kubectl commands.</p>
+          </div>
+          <div class="p-3.5 bg-slate-950/70 border border-slate-800 rounded-xl space-y-1.5">
+            <div class="flex items-center gap-2 text-purple-400 font-semibold">
+              <i data-lucide="file-text" class="w-4 h-4"></i> 5. Audit &amp; Explain
+            </div>
+            <p class="text-slate-300">Creates structured CSV audit logs and readable natural language explanations for enterprise compliance.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: USAGE & MONITORING -->
+    <section id="view-usage" class="tab-view space-y-6 hidden">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h3 class="text-xl font-bold text-white">Cloud Fleet Usage &amp; Rightsizing Telemetry</h3>
+          <p class="text-xs text-slate-400">Monitoring Agent classification of compute instances</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <input type="text" id="vm-search" oninput="filterVmTable()" placeholder="Search VM ID or Status..." class="bg-dark-900 border border-slate-700 text-xs text-white rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none w-64">
+        </div>
+      </div>
+
+      <!-- CPU Distribution Plot -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5 lg:col-span-2">
+          <h4 class="font-bold text-white text-sm mb-1">Average CPU Utilization Across Fleet</h4>
+          <p class="text-xs text-slate-400 mb-3">Red threshold indicates the 10% idle boundary</p>
+          <div class="h-64">
+            <canvas id="vmCpuHistogram"></canvas>
+          </div>
+        </div>
+
+        <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
+          <div>
+            <h4 class="font-bold text-white text-sm mb-2">Rightsizing Heuristics</h4>
+            <div class="space-y-3 text-xs text-slate-300">
+              <div class="p-3 bg-rose-950/30 border border-rose-900/50 rounded-xl">
+                <p class="font-semibold text-rose-400 flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-rose-400"></span> Idle Detection Rule
+                </p>
+                <p class="mt-1">VM CPU is below 10% for over 90% of observed hours. Recommended action: <strong>Decommission or hibernate</strong>.</p>
+              </div>
+              <div class="p-3 bg-amber-950/30 border border-amber-900/50 rounded-xl">
+                <p class="font-semibold text-amber-400 flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-amber-400"></span> Over-Provisioned Rule
+                </p>
+                <p class="mt-1">Peak CPU never exceeds 40%. Recommended action: <strong>Downsize instance family by 50%</strong>.</p>
+              </div>
+            </div>
+          </div>
+          <div class="text-xs text-slate-400 p-3 bg-slate-950/50 rounded-xl border border-slate-800">
+            Estimated waste savings potential: <span class="text-emerald-400 font-bold" id="waste-potential-text">$--</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- VM Table -->
+      <div class="bg-dark-900 border border-slate-800 rounded-2xl overflow-hidden">
+        <div class="px-5 py-3 border-b border-slate-800 flex justify-between items-center">
+          <h4 class="font-bold text-white text-sm">Monitored Virtual Machines (<span id="vm-count-badge">0</span>)</h4>
+        </div>
+        <div class="overflow-x-auto max-h-[460px] overflow-y-auto">
+          <table class="w-full text-left text-xs text-slate-300">
+            <thead class="bg-slate-950/80 sticky top-0 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
+              <tr>
+                <th class="px-4 py-3">VM ID</th>
+                <th class="px-4 py-3">Avg CPU %</th>
+                <th class="px-4 py-3">Min CPU %</th>
+                <th class="px-4 py-3">Peak CPU %</th>
+                <th class="px-4 py-3">% Time &lt; 10%</th>
+                <th class="px-4 py-3">Total Cost ($)</th>
+                <th class="px-4 py-3">Est. Waste ($)</th>
+                <th class="px-4 py-3">Status</th>
+              </tr>
+            </thead>
+            <tbody id="vm-table-body" class="divide-y divide-slate-800/60">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: DEMAND FORECASTING -->
+    <section id="view-forecast" class="tab-view space-y-6 hidden">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h3 class="text-xl font-bold text-white">Workload Demand Forecasting Engine</h3>
+          <p class="text-xs text-slate-400">Proactive machine learning forecasting vs statistical baselines</p>
+        </div>
+      </div>
+
+      <!-- Accuracy KPI Badges -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4" id="forecast-kpi-cards">
+        <div class="bg-dark-900 border border-slate-800 rounded-2xl p-4">
+          <p class="text-xs text-slate-400 uppercase font-medium">Random Forest RMSE</p>
+          <h4 id="rf-rmse-val" class="text-2xl font-bold text-emerald-400 mt-1">--</h4>
+          <p class="text-xs text-slate-400 mt-0.5">Root Mean Squared Error</p>
+        </div>
+        <div class="bg-dark-900 border border-slate-800 rounded-2xl p-4">
+          <p class="text-xs text-slate-400 uppercase font-medium">Random Forest MAPE</p>
+          <h4 id="rf-mape-val" class="text-2xl font-bold text-emerald-400 mt-1">--%</h4>
+          <p class="text-xs text-slate-400 mt-0.5">Mean Absolute Percentage Error</p>
+        </div>
+        <div class="bg-dark-900 border border-slate-800 rounded-2xl p-4">
+          <p class="text-xs text-slate-400 uppercase font-medium">Baseline Outperformance</p>
+          <h4 class="text-2xl font-bold text-indigo-400 mt-1">Confirmed</h4>
+          <p class="text-xs text-slate-400 mt-0.5">Beats 3-hr Moving Average Baseline</p>
+        </div>
+      </div>
+
+      <!-- Forecast Line Chart -->
+      <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div>
+            <h4 class="font-bold text-white text-base">Actual vs Predicted Demand Curve</h4>
+            <p class="text-xs text-slate-400">Continuous test timeline comparing actual load to ML predictions</p>
+          </div>
+          <div class="flex items-center gap-3 text-xs">
+            <span class="flex items-center gap-1.5"><span class="w-3 h-0.5 bg-blue-500"></span> Actual</span>
+            <span class="flex items-center gap-1.5"><span class="w-3 h-0.5 bg-emerald-500"></span> ML Forecast</span>
+          </div>
+        </div>
+        <div class="h-80">
+          <canvas id="forecastChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Model Comparison Table -->
+      <div class="bg-dark-900 border border-slate-800 rounded-2xl overflow-hidden">
+        <div class="px-5 py-3 border-b border-slate-800">
+          <h4 class="font-bold text-white text-sm">Forecasting Model Comparison</h4>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-slate-300">
+            <thead class="bg-slate-950/80 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
+              <tr>
+                <th class="px-4 py-3">Model Architecture</th>
+                <th class="px-4 py-3">RMSE</th>
+                <th class="px-4 py-3">MAE</th>
+                <th class="px-4 py-3">MAPE (%)</th>
+                <th class="px-4 py-3">Beats Baseline?</th>
+              </tr>
+            </thead>
+            <tbody id="forecast-metrics-body" class="divide-y divide-slate-800/60">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: DECISIONS & AUDIT -->
+    <section id="view-decisions" class="tab-view space-y-6 hidden">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h3 class="text-xl font-bold text-white">Autonomous Scaling Audit Trail</h3>
+          <p class="text-xs text-slate-400">Tamper-evident log of scaling actions with human-readable explanations</p>
+        </div>
+        <div class="flex items-center gap-2 text-xs">
+          <span class="px-2.5 py-1 rounded-lg bg-emerald-950 text-emerald-400 border border-emerald-800">Action: Add</span>
+          <span class="px-2.5 py-1 rounded-lg bg-rose-950 text-rose-400 border border-rose-800">Action: Remove</span>
+          <span class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 border border-slate-700">Action: Hold</span>
+        </div>
+      </div>
+
+      <!-- Decisions Table -->
+      <div class="bg-dark-900 border border-slate-800 rounded-2xl overflow-hidden">
+        <div class="overflow-x-auto max-h-[580px] overflow-y-auto">
+          <table class="w-full text-left text-xs text-slate-300">
+            <thead class="bg-slate-950/80 sticky top-0 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
+              <tr>
+                <th class="px-4 py-3">Timestamp</th>
+                <th class="px-4 py-3">Demand</th>
+                <th class="px-4 py-3">Forecast</th>
+                <th class="px-4 py-3">Replicas</th>
+                <th class="px-4 py-3">Action</th>
+                <th class="px-4 py-3">Cost Δ</th>
+                <th class="px-4 py-3">SLA Risk</th>
+                <th class="px-4 py-3 w-1/2">Plain-English Audit Explanation</th>
+              </tr>
+            </thead>
+            <tbody id="decisions-table-body" class="divide-y divide-slate-800/60">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 5: EVALUATION -->
+    <section id="view-evaluation" class="tab-view space-y-6 hidden">
+      <div>
+        <h3 class="text-xl font-bold text-white">Autoscaling Benchmark &amp; Strategy Evaluation</h3>
+        <p class="text-xs text-slate-400">Head-to-head comparison of Static, Threshold-based, and RL Reinforcement Learning</p>
+      </div>
+
+      <!-- Benchmark Table -->
+      <div class="bg-dark-900 border border-slate-800 rounded-2xl overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-slate-300">
+            <thead class="bg-slate-950/80 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
+              <tr>
+                <th class="px-5 py-3.5">Strategy</th>
+                <th class="px-5 py-3.5">Total Cost ($)</th>
+                <th class="px-5 py-3.5">SLA Violations</th>
+                <th class="px-5 py-3.5">SLA Compliance (%)</th>
+                <th class="px-5 py-3.5">Avg Utilization (%)</th>
+                <th class="px-5 py-3.5">Cost Reduction (%)</th>
+              </tr>
+            </thead>
+            <tbody id="evaluation-table-body" class="divide-y divide-slate-800/60 font-medium">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Evaluation Dual Charts -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5">
+          <h4 class="font-bold text-white text-sm mb-1">Total Cost Benchmark ($)</h4>
+          <p class="text-xs text-slate-400 mb-4">Lower is better. Demonstrates autonomous savings.</p>
+          <div class="h-64">
+            <canvas id="evalCostChart"></canvas>
+          </div>
+        </div>
+        <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5">
+          <h4 class="font-bold text-white text-sm mb-1">SLA Violations Count</h4>
+          <p class="text-xs text-slate-400 mb-4">Lower is better. Demonstrates performance reliability.</p>
+          <div class="h-64">
+            <canvas id="evalViolationsChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 6: IAC DEPLOYMENT -->
+    <section id="view-deployment" class="tab-view space-y-6 hidden">
+      <div>
+        <h3 class="text-xl font-bold text-white">Infrastructure-as-Code &amp; Kubernetes Deployment</h3>
+        <p class="text-xs text-slate-400">Automated Terraform HCL and Kubernetes manifest generation</p>
+      </div>
+
+      <!-- Safety Rules Card -->
+      <div class="p-4 bg-emerald-950/30 border border-emerald-900/50 rounded-2xl text-xs space-y-2">
+        <div class="flex items-center gap-2 text-emerald-400 font-bold text-sm">
+          <i data-lucide="shield-alert" class="w-5 h-5"></i> Deployment Agent Safety Invariants Enforced
+        </div>
+        <ul class="grid grid-cols-1 md:grid-cols-3 gap-2 text-slate-300">
+          <li class="flex items-center gap-2"><i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i> Server bounds: 1 &le; N &le; 10 replicas</li>
+          <li class="flex items-center gap-2"><i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i> Rate limiter: Max &plusmn;1 server change per step</li>
+          <li class="flex items-center gap-2"><i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i> Dry-run execution mode active by default</li>
+        </ul>
+      </div>
+
+      <!-- Code Snippets Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Terraform tfvars -->
+        <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5 flex flex-col">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-mono text-indigo-400 font-semibold flex items-center gap-1.5">
+              <i data-lucide="file-code" class="w-4 h-4"></i> outputs/terraform/terraform.tfvars
+            </span>
+            <button onclick="copyCode('tfvars-code')" class="text-xs text-slate-400 hover:text-white px-2 py-1 bg-slate-800 rounded border border-slate-700">Copy</button>
+          </div>
+          <pre id="tfvars-code" class="bg-slate-950 p-4 rounded-xl text-xs font-mono text-emerald-300 overflow-x-auto flex-1 border border-slate-800"># Loading...</pre>
+        </div>
+
+        <!-- Terraform variables.tf -->
+        <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5 flex flex-col">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-mono text-indigo-400 font-semibold flex items-center gap-1.5">
+              <i data-lucide="file-code" class="w-4 h-4"></i> outputs/terraform/variables.tf
+            </span>
+            <button onclick="copyCode('variables-code')" class="text-xs text-slate-400 hover:text-white px-2 py-1 bg-slate-800 rounded border border-slate-700">Copy</button>
+          </div>
+          <pre id="variables-code" class="bg-slate-950 p-4 rounded-xl text-xs font-mono text-indigo-300 overflow-x-auto flex-1 border border-slate-800"># Loading...</pre>
+        </div>
+
+        <!-- Kubernetes deployment.yaml -->
+        <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5 flex flex-col lg:col-span-2">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-mono text-indigo-400 font-semibold flex items-center gap-1.5">
+              <i data-lucide="box" class="w-4 h-4"></i> outputs/terraform/deployment.yaml (Kubernetes)
+            </span>
+            <button onclick="copyCode('k8s-code')" class="text-xs text-slate-400 hover:text-white px-2 py-1 bg-slate-800 rounded border border-slate-700">Copy</button>
+          </div>
+          <pre id="k8s-code" class="bg-slate-950 p-4 rounded-xl text-xs font-mono text-amber-300 overflow-x-auto h-48 border border-slate-800"># Loading...</pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 7: LIVE SIMULATOR -->
+    <section id="view-simulator" class="tab-view space-y-6 hidden">
+      <div>
+        <h3 class="text-xl font-bold text-white">Interactive Scaling Decision Simulator</h3>
+        <p class="text-xs text-slate-400">Viva &amp; Demonstration Sandbox: Test custom load scenarios and observe real-time agent reactions</p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Interactive Controls -->
+        <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+          <h4 class="font-bold text-white text-sm mb-3">Input Parameters</h4>
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Current Active Servers (1-10)</label>
+            <input type="number" id="sim-servers" value="3" min="1" max="10" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm text-white focus:ring-2 focus:ring-indigo-500 outline-none">
+          </div>
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Current Observed Demand (Units)</label>
+            <input type="number" id="sim-demand" value="280" min="0" step="10" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm text-white focus:ring-2 focus:ring-indigo-500 outline-none">
+          </div>
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Forecasted Next-Hour Demand (Units)</label>
+            <input type="number" id="sim-forecast" value="360" min="0" step="10" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm text-white focus:ring-2 focus:ring-indigo-500 outline-none">
+          </div>
+          <div class="grid grid-cols-2 gap-3 text-xs">
+            <div>
+              <label class="block text-slate-400 mb-1">Server Capacity</label>
+              <input type="number" id="sim-capacity" value="100" readonly class="w-full bg-slate-950/60 border border-slate-800 rounded-lg p-2 text-slate-400">
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1">Hourly Price ($)</label>
+              <input type="number" id="sim-price" value="1.0" readonly class="w-full bg-slate-950/60 border border-slate-800 rounded-lg p-2 text-slate-400">
+            </div>
+          </div>
+          <button onclick="runInteractiveStep()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20">
+            <i data-lucide="play" class="w-4 h-4"></i> Run Agent Decision Step
+          </button>
+        </div>
+
+        <!-- Simulation Result Output -->
+        <div class="lg:col-span-2 bg-dark-900 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
+          <div>
+            <h4 class="font-bold text-white text-sm mb-3">Agent Reaction &amp; Safety Verification</h4>
+            <div id="sim-result-box" class="space-y-4">
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+                <div class="p-3 bg-slate-950 rounded-xl border border-slate-800">
+                  <span class="block text-xs text-slate-400">Action</span>
+                  <span id="sim-out-action" class="font-bold text-emerald-400 text-base uppercase">--</span>
+                </div>
+                <div class="p-3 bg-slate-950 rounded-xl border border-slate-800">
+                  <span class="block text-xs text-slate-400">Scaled Replicas</span>
+                  <span id="sim-out-servers" class="font-bold text-white text-base">--</span>
+                </div>
+                <div class="p-3 bg-slate-950 rounded-xl border border-slate-800">
+                  <span class="block text-xs text-slate-400">Cluster Capacity</span>
+                  <span id="sim-out-capacity" class="font-bold text-indigo-400 text-base">--</span>
+                </div>
+                <div class="p-3 bg-slate-950 rounded-xl border border-slate-800">
+                  <span class="block text-xs text-slate-400">Projected Util %</span>
+                  <span id="sim-out-util" class="font-bold text-amber-400 text-base">--</span>
+                </div>
+              </div>
+
+              <!-- Explanation badge -->
+              <div class="p-4 bg-indigo-950/30 border border-indigo-900/50 rounded-xl space-y-1">
+                <div class="text-xs font-semibold text-indigo-400 flex items-center gap-1.5">
+                  <i data-lucide="sparkles" class="w-4 h-4"></i> Audit &amp; Explainability Agent Rationale
+                </div>
+                <p id="sim-out-explanation" class="text-xs text-slate-200 leading-relaxed">
+                  Configure inputs and click "Run Agent Decision Step" to execute live simulation.
+                </p>
+              </div>
+
+              <!-- Deployment preview -->
+              <div class="p-3 bg-slate-950 rounded-xl border border-slate-800 text-xs">
+                <span class="text-slate-400 block mb-1">Generated Execution Command:</span>
+                <code id="sim-out-cmd" class="text-emerald-400 font-mono">kubectl scale deployment cloud-worker-deployment --replicas=...</code>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-slate-800 text-xs text-slate-400 flex items-center gap-2">
+            <i data-lucide="check" class="w-4 h-4 text-emerald-400"></i>
+            <span>Safety status: <strong id="sim-out-safety" class="text-slate-200">Awaiting input</strong></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-800 bg-dark-950 px-4 py-4 text-center text-xs text-slate-400">
+    Autonomous Cloud Cost &amp; Performance Optimizer &bull; Team XOXO (T-09) &bull; Built with FastAPI &amp; Vanilla JS / Chart.js
+  </footer>
+
+  <!-- Application Logic & Chart.js Controllers -->
+  <script>
+    // Universal API Address (easily configurable for production Render/Vercel)
+    const API = window.location.origin;
+
+    // Charts instances
+    let charts = {};
+    let cachedVmData = [];
+
+    // Switch Tabs
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-view').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('bg-indigo-600', 'text-white');
+        btn.classList.add('text-slate-400');
+      });
+
+      const targetView = document.getElementById(`view-${tabId}`);
+      const targetBtn = document.getElementById(`tab-${tabId}`);
+      if (targetView) targetView.classList.remove('hidden');
+      if (targetBtn) {
+        targetBtn.classList.remove('text-slate-400');
+        targetBtn.classList.add('bg-indigo-600', 'text-white');
+      }
+
+      // Re-render chart sizes if needed
+      window.dispatchEvent(new Event('resize'));
+    }
+
+    // Copy helper
+    function copyCode(elementId) {
+      const text = document.getElementById(elementId).innerText;
+      navigator.clipboard.writeText(text);
+      alert('Copied to clipboard!');
+    }
+
+    // Load All Data from FastAPI
+    async function loadAllData() {
+      const spinner = document.getElementById('loading-spinner');
+      const refreshIcon = document.getElementById('refresh-icon');
+      spinner.classList.remove('hidden');
+      refreshIcon.classList.add('animate-spin');
+
+      try {
+        await Promise.all([
+          loadOverview(),
+          loadUsage(),
+          loadForecast(),
+          loadDecisions(),
+          loadEvaluation(),
+          loadConfig(),
+        ]);
+      } catch (err) {
+        console.error('Error fetching data from API:', err);
+      } finally {
+        spinner.classList.add('hidden');
+        refreshIcon.classList.remove('animate-spin');
+        lucide.createIcons();
+      }
+    }
+
+    // 1. Load Overview
+    async function loadOverview() {
+      const res = await fetch(`${API}/api/overview`);
+      const data = await res.json();
+
+      document.getElementById('kpi-savings-pct').innerText = `${data.cost_savings_pct || 0}%`;
+      document.getElementById('kpi-cost-saved-usd').innerText = `Saved $${data.cost_saved_usd || 0} vs Static`;
+      document.getElementById('kpi-savings-bar').style.width = `${Math.min(100, data.cost_savings_pct || 0)}%`;
+
+      document.getElementById('kpi-sla-compliance').innerText = `${data.sla_compliance_pct || 100}%`;
+      document.getElementById('kpi-sla-violations').innerText = `${data.sla_violations || 0} Breach Events`;
+      document.getElementById('kpi-sla-bar').style.width = `${data.sla_compliance_pct || 100}%`;
+
+      document.getElementById('kpi-idle-vms').innerText = `${data.idle_vms_detected || 0} VMs`;
+      document.getElementById('kpi-idle-waste-usd').innerText = `$${data.fleet_waste_usd || 0} detected waste`;
+
+      document.getElementById('kpi-active-servers').innerText = `${data.latest_servers || 3} Replicas`;
+    }
+
+    // 2. Load Usage & Fleet Data
+    async function loadUsage() {
+      const res = await fetch(`${API}/api/usage`);
+      const data = await res.json();
+      cachedVmData = data;
+
+      document.getElementById('vm-count-badge').innerText = data.length;
+
+      let optimal = 0, idle = 0, overprov = 0, totalWaste = 0;
+      data.forEach(vm => {
+        if (vm.status === 'OPTIMAL') optimal++;
+        else if (vm.status === 'IDLE') idle++;
+        else if (vm.status === 'OVER_PROVISIONED') overprov++;
+        totalWaste += parseFloat(vm.estimated_waste || 0);
+      });
+
+      document.getElementById('donut-optimal-cnt').innerText = optimal;
+      document.getElementById('donut-idle-cnt').innerText = idle;
+      document.getElementById('donut-overprov-cnt').innerText = overprov;
+      document.getElementById('waste-potential-text').innerText = `$${totalWaste.toFixed(2)}`;
+
+      renderVmTable(data);
+      renderOverviewDonut(optimal, idle, overprov);
+      renderVmCpuHistogram(data);
+    }
+
+    function renderVmTable(vms) {
+      const tbody = document.getElementById('vm-table-body');
+      tbody.innerHTML = '';
+
+      vms.forEach(vm => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-800/40 transition';
+
+        let statusBadge = '';
+        if (vm.status === 'OPTIMAL') {
+          statusBadge = '<span class="px-2 py-0.5 rounded-full text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 font-medium">Optimal</span>';
+        } else if (vm.status === 'IDLE') {
+          statusBadge = '<span class="px-2 py-0.5 rounded-full text-rose-400 bg-rose-500/10 border border-rose-500/20 font-medium">Idle</span>';
+        } else {
+          statusBadge = '<span class="px-2 py-0.5 rounded-full text-amber-400 bg-amber-500/10 border border-amber-500/20 font-medium">Over-Prov</span>';
+        }
+
+        tr.innerHTML = `
+          <td class="px-4 py-2.5 font-mono text-white">${vm.vm_id}</td>
+          <td class="px-4 py-2.5">${vm.avg_cpu}%</td>
+          <td class="px-4 py-2.5">${vm.min_cpu}%</td>
+          <td class="px-4 py-2.5">${vm.peak_cpu}%</td>
+          <td class="px-4 py-2.5">${vm.pct_low}%</td>
+          <td class="px-4 py-2.5 font-mono">$${vm.total_cost}</td>
+          <td class="px-4 py-2.5 font-mono text-rose-400">$${vm.estimated_waste}</td>
+          <td class="px-4 py-2.5">${statusBadge}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function filterVmTable() {
+      const q = document.getElementById('vm-search').value.toLowerCase();
+      const filtered = cachedVmData.filter(vm =>
+        vm.vm_id.toLowerCase().includes(q) || vm.status.toLowerCase().includes(q)
+      );
+      renderVmTable(filtered);
+    }
+
+    function renderOverviewDonut(optimal, idle, overprov) {
+      if (charts.donut) charts.donut.destroy();
+      const ctx = document.getElementById('overviewDonutChart').getContext('2d');
+      charts.donut = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Optimal', 'Idle', 'Over-provisioned'],
+          datasets: [{
+            data: [optimal, idle, overprov],
+            backgroundColor: ['#10b981', '#ef4444', '#f59e0b'],
+            borderWidth: 0,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          cutout: '70%'
+        }
+      });
+    }
+
+    function renderVmCpuHistogram(vms) {
+      if (charts.hist) charts.hist.destroy();
+      const bins = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+      const counts = new Array(bins.length - 1).fill(0);
+
+      vms.forEach(vm => {
+        const cpu = parseFloat(vm.avg_cpu || 0);
+        for (let i = 0; i < bins.length - 1; i++) {
+          if (cpu >= bins[i] && (i === bins.length - 2 ? cpu <= bins[i+1] : cpu < bins[i+1])) {
+            counts[i]++;
+            break;
+          }
+        }
+      });
+
+      const labels = bins.slice(0, -1).map((b, i) => `${b}-${bins[i+1]}%`);
+      const ctx = document.getElementById('vmCpuHistogram').getContext('2d');
+      charts.hist = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'VM Count',
+            data: counts,
+            backgroundColor: labels.map((_, i) => i === 0 ? '#ef4444' : '#6366f1'),
+            borderRadius: 6,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
+            x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+          }
+        }
+      });
+    }
+
+    // 3. Load Demand Forecast
+    async function loadForecast() {
+      const res = await fetch(`${API}/api/forecast?limit=120`);
+      const data = await res.json();
+
+      const metricsRes = await fetch(`${API}/api/forecast/metrics`);
+      const metricsData = await metricsRes.json();
+
+      // Metrics cards
+      const rf = metricsData.find(m => m.model.includes('Random Forest')) || metricsData[0] || {};
+      document.getElementById('rf-rmse-val').innerText = rf.rmse || '--';
+      document.getElementById('rf-mape-val').innerText = `${rf.mape_percent || '--'}%`;
+
+      // Metrics Table
+      const mBody = document.getElementById('forecast-metrics-body');
+      mBody.innerHTML = '';
+      metricsData.forEach(m => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-800/40';
+        const beatTag = m.beats_baseline ? '<span class="text-emerald-400 font-bold">Yes (Beats MA)</span>' : '<span class="text-slate-400">Baseline</span>';
+        tr.innerHTML = `
+          <td class="px-4 py-2.5 font-medium text-white">${m.model}</td>
+          <td class="px-4 py-2.5 font-mono text-indigo-300">${m.rmse}</td>
+          <td class="px-4 py-2.5 font-mono">${m.mae}</td>
+          <td class="px-4 py-2.5 font-mono">${m.mape_percent}%</td>
+          <td class="px-4 py-2.5">${beatTag}</td>
+        `;
+        mBody.appendChild(tr);
+      });
+
+      // Forecast Line Chart
+      if (charts.forecast) charts.forecast.destroy();
+      const ctx = document.getElementById('forecastChart').getContext('2d');
+      charts.forecast = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: data.map((r, i) => `H+${i}`),
+          datasets: [
+            {
+              label: 'Actual Workload Demand',
+              data: data.map(r => r.actual),
+              borderColor: '#3b82f6',
+              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+              borderWidth: 2,
+              tension: 0.3,
+              pointRadius: 1,
+            },
+            {
+              label: 'Machine Learning Forecast',
+              data: data.map(r => r.predicted),
+              borderColor: '#10b981',
+              backgroundColor: 'transparent',
+              borderWidth: 2,
+              borderDash: [4, 4],
+              tension: 0.3,
+              pointRadius: 1,
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { labels: { color: '#cbd5e1' } }
+          },
+          scales: {
+            y: {
+              grid: { color: '#334155' },
+              ticks: { color: '#94a3b8' },
+              title: { display: true, text: 'Demand Load Units', color: '#94a3b8' }
+            },
+            x: {
+              grid: { color: '#1e293b' },
+              ticks: { color: '#94a3b8', maxTicksLimit: 12 },
+              title: { display: true, text: 'Simulation Timeline (Hours)', color: '#94a3b8' }
+            }
+          }
+        }
+      });
+    }
+
+    // 4. Load Decisions & Audit Log
+    async function loadDecisions() {
+      const res = await fetch(`${API}/api/decisions?limit=200`);
+      const data = await res.json();
+      const tbody = document.getElementById('decisions-table-body');
+      tbody.innerHTML = '';
+
+      data.forEach(d => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-800/40';
+
+        let actBadge = '';
+        if (d.action === 'add') {
+          actBadge = '<span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold uppercase text-[10px]">ADD +1</span>';
+        } else if (d.action === 'remove') {
+          actBadge = '<span class="px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 font-bold uppercase text-[10px]">REMOVE -1</span>';
+        } else {
+          actBadge = '<span class="px-2 py-0.5 rounded bg-slate-700/50 text-slate-300 font-bold uppercase text-[10px]">HOLD</span>';
+        }
+
+        let riskBadge = '';
+        if (d.sla_risk === 'high') riskBadge = '<span class="text-rose-400 font-bold">HIGH</span>';
+        else if (d.sla_risk === 'moderate') riskBadge = '<span class="text-amber-400 font-bold">MODERATE</span>';
+        else riskBadge = '<span class="text-emerald-400 font-bold">LOW</span>';
+
+        const costSign = d.cost_change > 0 ? `+$${d.cost_change}` : (d.cost_change < 0 ? `-$${Math.abs(d.cost_change)}` : '$0.00');
+
+        tr.innerHTML = `
+          <td class="px-4 py-2.5 font-mono text-slate-400 whitespace-nowrap">${d.timestamp ? d.timestamp.substring(11, 19) || d.timestamp : '--'}</td>
+          <td class="px-4 py-2.5 font-mono">${d.demand}</td>
+          <td class="px-4 py-2.5 font-mono">${d.forecast}</td>
+          <td class="px-4 py-2.5 font-semibold text-white">${d.servers_before} &rarr; ${d.servers_after}</td>
+          <td class="px-4 py-2.5">${actBadge}</td>
+          <td class="px-4 py-2.5 font-mono">${costSign}</td>
+          <td class="px-4 py-2.5">${riskBadge}</td>
+          <td class="px-4 py-2.5 text-slate-200 leading-relaxed">${d.explanation || ''}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // 5. Load Evaluation & Benchmark
+    async function loadEvaluation() {
+      const res = await fetch(`${API}/api/evaluation`);
+      const data = await res.json();
+
+      const tbody = document.getElementById('evaluation-table-body');
+      tbody.innerHTML = '';
+      data.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-800/40';
+        const isRL = row.strategy.includes('Autonomous') || row.strategy.includes('RL');
+        if (isRL) tr.classList.add('bg-indigo-950/20');
+
+        tr.innerHTML = `
+          <td class="px-5 py-3.5 text-white flex items-center gap-2">
+            ${isRL ? '<span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>' : ''}
+            <strong>${row.strategy}</strong>
+          </td>
+          <td class="px-5 py-3.5 font-mono text-indigo-300 font-bold">$${row.total_cost}</td>
+          <td class="px-5 py-3.5 font-mono ${row.sla_violations > 0 ? 'text-rose-400' : 'text-emerald-400'}">${row.sla_violations}</td>
+          <td class="px-5 py-3.5 font-mono">${row.sla_compliance_pct}%</td>
+          <td class="px-5 py-3.5 font-mono">${row.avg_utilization_pct}%</td>
+          <td class="px-5 py-3.5 font-mono text-emerald-400 font-bold">${row.cost_savings_pct}%</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // Render Comparison Bar Chart on Overview & Evaluation tabs
+      renderEvaluationCharts(data);
+    }
+
+    function renderEvaluationCharts(evalData) {
+      const labels = evalData.map(d => d.strategy.replace('Allocation ', '').replace('Autonomous ', ''));
+      const costs = evalData.map(d => d.total_cost);
+      const violations = evalData.map(d => d.sla_violations);
+
+      // Overview Bar Chart
+      if (charts.overviewCost) charts.overviewCost.destroy();
+      const ctx1 = document.getElementById('overviewCostChart').getContext('2d');
+      charts.overviewCost = new Chart(ctx1, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Total Cost ($)',
+            data: costs,
+            backgroundColor: ['#64748b', '#f59e0b', '#6366f1'],
+            borderRadius: 8,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
+            x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+          }
+        }
+      });
+
+      // Eval Cost Chart
+      if (charts.evalCost) charts.evalCost.destroy();
+      const ctx2 = document.getElementById('evalCostChart').getContext('2d');
+      charts.evalCost = new Chart(ctx2, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Total Spend ($)',
+            data: costs,
+            backgroundColor: ['#475569', '#f59e0b', '#10b981'],
+            borderRadius: 8,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
+            x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+          }
+        }
+      });
+
+      // Eval Violations Chart
+      if (charts.evalViolations) charts.evalViolations.destroy();
+      const ctx3 = document.getElementById('evalViolationsChart').getContext('2d');
+      charts.evalViolations = new Chart(ctx3, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'SLA Violations',
+            data: violations,
+            backgroundColor: '#ef4444',
+            borderRadius: 8,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8', stepSize: 1 } },
+            x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+          }
+        }
+      });
+    }
+
+    // 6. Load Config & IaC
+    async function loadConfig() {
+      const res = await fetch(`${API}/api/config`);
+      const data = await res.json();
+      document.getElementById('tfvars-code').innerText = data.terraform_tfvars || '# None';
+      document.getElementById('variables-code').innerText = data.variables_tf || '# None';
+      document.getElementById('k8s-code').innerText = data.kubernetes_yaml || '# None';
+    }
+
+    // 7. Interactive Scaling Step Simulation
+    async function runInteractiveStep() {
+      const curServers = parseInt(document.getElementById('sim-servers').value) || 3;
+      const curDemand = parseFloat(document.getElementById('sim-demand').value) || 250;
+      const curForecast = parseFloat(document.getElementById('sim-forecast').value) || 320;
+
+      const res = await fetch(`${API}/api/simulate-step`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          current_servers: curServers,
+          current_demand: curDemand,
+          forecast_demand: curForecast,
+        })
+      });
+
+      const data = await res.json();
+
+      document.getElementById('sim-out-action').innerText = data.action;
+      document.getElementById('sim-out-servers').innerText = `${data.servers_before} → ${data.servers_after}`;
+      document.getElementById('sim-out-capacity').innerText = `${data.capacity} units`;
+      document.getElementById('sim-out-util').innerText = `${data.utilization_pct}%`;
+      document.getElementById('sim-out-explanation').innerText = data.explanation;
+      document.getElementById('sim-out-cmd').innerText = data.kubectl_command;
+      document.getElementById('sim-out-safety').innerText = data.safety_status;
+
+      // Update input servers to reflect the step
+      document.getElementById('sim-servers').value = data.servers_after;
+      lucide.createIcons();
+    }
+
+    // Initial Load
+    window.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      loadAllData();
+    });
+  </script>
+</body>
+</html>

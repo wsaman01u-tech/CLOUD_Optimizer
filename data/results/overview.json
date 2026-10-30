@@ -1,0 +1,14 @@
+{
+  "static_cost": 808.0,
+  "optimized_cost": 632.0,
+  "cost_saved_usd": 176.0,
+  "cost_savings_pct": 21.78,
+  "sla_compliance_pct": 99.01,
+  "sla_violations": 1,
+  "total_vms_monitored": 25,
+  "idle_vms_detected": 6,
+  "overprovisioned_vms": 7,
+  "fleet_waste_usd": 3064.32,
+  "latest_servers": 6,
+  "pipeline_status": "ONLINE"
+}

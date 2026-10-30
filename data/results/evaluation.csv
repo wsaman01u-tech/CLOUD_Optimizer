@@ -1,0 +1,4 @@
+strategy,total_cost,sla_violations,sla_compliance_pct,avg_utilization_pct,cost_savings_pct
+Static Allocation (Fixed 8),808.0,0,100.0,65.49,0.0
+Reactive Threshold (30/70%),954.0,1,99.01,56.26,-18.07
+Autonomous RL Optimizer (Q-Learning + Forecast),632.0,1,99.01,83.18,21.78

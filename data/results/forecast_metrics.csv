@@ -1,0 +1,5 @@
+model,rmse,mae,mape_percent,beats_baseline
+Random Forest Regressor (ML),33.57,26.55,4.85,True
+Seasonal Naive (24h),45.02,35.96,6.51,True
+Moving Average (3h),90.72,81.33,15.21,False
+Holt-Winters ExpSmoothing,135.13,108.18,18.36,False
