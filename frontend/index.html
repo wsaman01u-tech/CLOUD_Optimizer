@@ -1495,6 +1495,28 @@
           </button>
         </div>
 
+        <!-- Netlify & Remote Backend API Connection Card -->
+        <div class="card-beige p-6 rounded-3xl space-y-4">
+          <div class="flex items-center justify-between pb-3 border-b border-cream-200">
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <i data-lucide="server" class="w-4 h-4 text-sage-600"></i>
+                <span>Backend API Connection (FastAPI Endpoint)</span>
+              </h3>
+              <p class="text-xs text-slate-500">Configure where your FastAPI AI engine is hosted (e.g. local, Railway, Render, Fly.io, or Netlify proxy).</p>
+            </div>
+            <span id="api-connection-status-badge" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-300">Checking...</span>
+          </div>
+          <div class="flex flex-col sm:flex-row gap-3">
+            <input type="text" id="settings-api-endpoint" placeholder="e.g. https://cloud-optimizer-api.up.railway.app or leave blank for current domain" class="flex-1 bg-cream-50 border border-cream-300 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-900 outline-none focus:ring-2 focus:ring-sage-500">
+            <button type="button" onclick="saveAndTestApiEndpoint()" class="btn-lift px-5 py-2 rounded-xl bg-sage-600 hover:bg-sage-700 text-white font-bold text-xs shadow-xs transition flex items-center justify-center gap-1.5 shrink-0">
+              <i data-lucide="wifi" class="w-3.5 h-3.5"></i>
+              <span>Save &amp; Test</span>
+            </button>
+          </div>
+          <p class="text-[11px] text-slate-500">Leave blank to use the same origin (relative requests like <code>/api/v2/...</code>). When deploying on Netlify with a separate backend, paste its live URL here.</p>
+        </div>
+
         <!-- Simple View: Style, Mode, Budget -->
         <div class="card-beige p-6 rounded-3xl space-y-6">
           
@@ -1687,7 +1709,12 @@
 
   <!-- JAVASCRIPT CONTROLLER -->
   <script>
-    const API = '';
+    function getApiBase() {
+      const saved = localStorage.getItem('cloudopt_api_url');
+      if (saved && saved.trim()) return saved.trim().replace(/\/+$/, '');
+      return '';
+    }
+    let API = getApiBase();
     let currentTab = 'home';
     let currentPage = 'landing';
     let wizardCurrentStep = 1;
@@ -2368,6 +2395,48 @@
       setTimeout(() => {
         window.location.reload();
       }, 1000);
+    }
+
+    function initApiEndpointUI() {
+      const input = document.getElementById('settings-api-endpoint');
+      if (input) {
+        input.value = localStorage.getItem('cloudopt_api_url') || '';
+      }
+      checkApiConnection();
+    }
+
+    async function checkApiConnection() {
+      const badge = document.getElementById('api-connection-status-badge');
+      if (!badge) return;
+      try {
+        const res = await fetch(`${API}/api/health`);
+        if (res.ok) {
+          badge.innerText = 'Connected';
+          badge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200';
+        } else {
+          badge.innerText = 'Offline (HTTP ' + res.status + ')';
+          badge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200';
+        }
+      } catch (e) {
+        badge.innerText = 'Offline / Static Demo';
+        badge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-300';
+      }
+    }
+
+    async function saveAndTestApiEndpoint() {
+      const input = document.getElementById('settings-api-endpoint');
+      if (!input) return;
+      const val = input.value.trim().replace(/\/+$/, '');
+      if (val) {
+        localStorage.setItem('cloudopt_api_url', val);
+      } else {
+        localStorage.removeItem('cloudopt_api_url');
+      }
+      API = getApiBase();
+      showToast('Testing Connection', 'Connecting to ' + (API || 'current origin') + '...', true);
+      await checkApiConnection();
+      await refreshAllData();
+      showToast('Settings Saved', 'Backend API URL updated.', true);
     }
 
     function toggleWizardUploadZone(show) {
@@ -3505,6 +3574,7 @@
     window.addEventListener('DOMContentLoaded', () => {
       initFirebase();
       loadLocalUserSession();
+      initApiEndpointUI();
       lucide.createIcons();
 
       // Route to dashboard if logged in, otherwise show landing page
