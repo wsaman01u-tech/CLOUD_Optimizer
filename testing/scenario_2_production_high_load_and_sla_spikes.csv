@@ -1,0 +1,10 @@
+Resource ID,Resource Name,Cloud Provider,Region,Instance Type,vCPU,RAM (GB),CPU Utilization (%),Peak CPU (%),Memory Utilization (%),Storage (GB),Monthly Cost ($),Environment,Status
+ec2-prod-checkout-primary-01,Checkout Cluster Leader,AWS,us-east-1,t3.large,2,8.0,88.4%,96.2%,92.1%,200,$59.90,production,hot
+azure-prod-payment-gateway-02,Stripe Core Connector,Azure,eastus,Standard_B2s,2,4.0,85.6%,94.5%,88.0%,100,$30.36,production,hot
+gcp-prod-postgres-primary-03,Cloud SQL Postgres Master,GCP,us-central1,e2-standard-2,2,8.0,91.2%,97.8%,94.5%,500,$48.80,production,hot
+ec2-prod-inventory-api-04,Inventory Sync Engine,AWS,us-east-1,t3.large,2,8.0,82.5%,89.4%,85.0%,150,$59.90,production,hot
+azure-prod-user-auth-05,OAuth Token Validator,Azure,westeurope,Standard_D2s_v3,2,8.0,86.0%,93.1%,87.4%,100,$70.08,production,hot
+gcp-prod-redis-cache-06,Memorystore Redis Primary,GCP,us-central1,e2-medium,2,4.0,84.1%,91.0%,89.2%,50,$24.50,production,hot
+ec2-prod-search-indexer-07,Elasticsearch Log Indexer,AWS,us-west-2,t3.xlarge,4,16.0,48.5%,62.0%,55.0%,300,$119.81,production,healthy
+azure-prod-api-router-08,API Management Proxy,Azure,eastus,Standard_D4s_v3,4,16.0,42.0%,58.5%,46.0%,128,$140.16,production,healthy
+gcp-prod-web-frontend-09,GKE Ingress Controller,GCP,europe-west1,e2-standard-4,4,16.0,45.2%,61.0%,51.0%,200,$97.60,production,healthy

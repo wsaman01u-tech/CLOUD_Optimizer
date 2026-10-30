@@ -1,0 +1,11 @@
+Student_ID,Student_Name,Department,Course_Code,Course_Title,Midterm_Score,Final_Score,Attendance_Percentage,Letter_Grade
+STU-1001,John Smith,Computer Science,CS-301,Data Structures & Algorithms,88,92,96%,A
+STU-1002,Alice Walker,Electrical Engineering,EE-201,Circuits and Signals,74,81,88%,B
+STU-1003,Robert Chen,Mechanical Engineering,ME-405,Thermodynamics,65,70,82%,C
+STU-1004,Elena Rostova,Mathematics,MATH-220,Linear Algebra,95,98,100%,A
+STU-1005,David Miller,Business Administration,BUS-101,Microeconomics,82,78,90%,B
+STU-1006,Sophia Martinez,Economics,ECON-310,Econometrics,91,89,94%,A
+STU-1007,Marcus Johnson,Physics,PHYS-250,Classical Mechanics,78,84,91%,B
+STU-1008,Amina Hassan,Bioinformatics,BIO-410,Genomic Data Analysis,85,90,95%,A
+STU-1009,Liam O'Connor,History,HIST-150,Modern World History,70,72,85%,C
+STU-1010,Chen Wei,Chemistry,CHEM-201,Organic Chemistry I,89,93,98%,A
