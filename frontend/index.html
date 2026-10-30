@@ -633,16 +633,16 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div>
                 <label class="block font-semibold text-slate-700 text-[11px]">Auth Domain</label>
-                <input type="text" id="fb-cfg-authdomain" placeholder="your-app.firebaseapp.com" class="w-full bg-white border border-cream-300 rounded-lg px-2.5 py-1.5 text-xs font-mono">
+                <input type="text" id="fb-cfg-authdomain" placeholder="cloud-5f202.firebaseapp.com" class="w-full bg-white border border-cream-300 rounded-lg px-2.5 py-1.5 text-xs font-mono">
               </div>
               <div>
                 <label class="block font-semibold text-slate-700 text-[11px]">Project ID</label>
-                <input type="text" id="fb-cfg-projectid" placeholder="your-app" class="w-full bg-white border border-cream-300 rounded-lg px-2.5 py-1.5 text-xs font-mono">
+                <input type="text" id="fb-cfg-projectid" placeholder="cloud-5f202" class="w-full bg-white border border-cream-300 rounded-lg px-2.5 py-1.5 text-xs font-mono">
               </div>
             </div>
             <div class="space-y-1.5">
               <label class="block font-semibold text-slate-700 text-[11px]">Storage Bucket</label>
-              <input type="text" id="fb-cfg-storagebucket" placeholder="your-app.appspot.com" class="w-full bg-white border border-cream-300 rounded-lg px-2.5 py-1.5 text-xs font-mono">
+              <input type="text" id="fb-cfg-storagebucket" placeholder="cloud-5f202.firebasestorage.app" class="w-full bg-white border border-cream-300 rounded-lg px-2.5 py-1.5 text-xs font-mono">
             </div>
             <button type="button" onclick="saveCustomFirebaseConfig()" class="btn-lift px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-xs transition">
               Save &amp; Reconnect Firebase
@@ -1757,12 +1757,13 @@
     // =========================================================================
 
     const DEFAULT_FIREBASE_CONFIG = {
-      apiKey: "AIzaSyD-DEMO-cloud-optimizer-key-77291",
-      authDomain: "cloud-optimizer-prod.firebaseapp.com",
-      projectId: "cloud-optimizer-prod",
-      storageBucket: "cloud-optimizer-prod.appspot.com",
-      messagingSenderId: "109283746501",
-      appId: "1:109283746501:web:981273948bcae"
+      apiKey: "AIzaSyAZ2aPq_4edc02aRQFLRnsvihK5mnASrxc",
+      authDomain: "cloud-5f202.firebaseapp.com",
+      projectId: "cloud-5f202",
+      storageBucket: "cloud-5f202.firebasestorage.app",
+      messagingSenderId: "1075099523171",
+      appId: "1:1075099523171:web:454f2dcf4701265edac056",
+      measurementId: "G-RV6H9XF4Q2"
     };
 
     let firebaseApp = null;
@@ -1804,7 +1805,12 @@
     function getFirebaseConfig() {
       const saved = localStorage.getItem('cloudopt_firebase_config');
       if (saved) {
-        try { return JSON.parse(saved); } catch (e) { }
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed && parsed.apiKey && !parsed.apiKey.includes('DEMO')) {
+            return parsed;
+          }
+        } catch (e) { }
       }
       return DEFAULT_FIREBASE_CONFIG;
     }
