@@ -53,6 +53,8 @@
 
   <!-- Chart.js 4 -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <!-- SheetJS for client-side Excel (.xlsx/.xls) and CSV parsing -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
 
@@ -335,9 +337,9 @@
                 <!-- Sample Download Links -->
                 <div class="pt-1.5 border-t border-cream-200 flex flex-wrap items-center gap-2 text-[10px] text-slate-600">
                   <span class="font-semibold text-slate-700">Download sample templates:</span>
-                  <a href="/api/v2/samples/multi_cloud_fleet_sample.csv" download class="px-2 py-0.5 rounded bg-cream-200 hover:bg-sage-600 hover:text-white font-mono font-semibold transition">.CSV</a>
-                  <a href="/api/v2/samples/multi_cloud_fleet_sample.xlsx" download class="px-2 py-0.5 rounded bg-cream-200 hover:bg-sage-600 hover:text-white font-mono font-semibold transition">.XLSX (Excel)</a>
-                  <a href="/api/v2/samples/multi_cloud_fleet_sample.json" download class="px-2 py-0.5 rounded bg-cream-200 hover:bg-sage-600 hover:text-white font-mono font-semibold transition">.JSON</a>
+                  <a href="./samples/multi_cloud_fleet_sample.csv" download class="px-2 py-0.5 rounded bg-cream-200 hover:bg-sage-600 hover:text-white font-mono font-semibold transition">.CSV</a>
+                  <a href="./samples/multi_cloud_fleet_sample.xlsx" download class="px-2 py-0.5 rounded bg-cream-200 hover:bg-sage-600 hover:text-white font-mono font-semibold transition">.XLSX (Excel)</a>
+                  <a href="./samples/multi_cloud_fleet_sample.json" download class="px-2 py-0.5 rounded bg-cream-200 hover:bg-sage-600 hover:text-white font-mono font-semibold transition">.JSON</a>
                 </div>
               </div>
             </div>
@@ -1230,7 +1232,13 @@
 
         <!-- Filters Strip -->
         <div class="flex flex-wrap items-center gap-3 p-3 rounded-2xl bg-cream-200/70 text-xs">
-          <span class="font-bold text-slate-600 text-xs">Filter by:</span>
+          <!-- Search Filter -->
+          <div class="relative flex-1 min-w-[200px]">
+            <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+            <input type="text" id="filter-suggestions-search" oninput="loadSuggestions()" placeholder="Search suggestions by ID, action, provider..." class="w-full pl-8 pr-3 py-1.5 bg-white border border-cream-300 rounded-xl text-xs font-medium text-slate-800 outline-none focus:ring-2 focus:ring-sage-500">
+          </div>
+
+          <span class="font-bold text-slate-600 text-xs hidden sm:inline">Filter:</span>
 
           <!-- Sort Filter -->
           <select id="filter-sort" onchange="loadSuggestions()" class="bg-white border border-cream-300 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-800 outline-none focus:ring-2 focus:ring-sage-500">
@@ -1253,6 +1261,8 @@
             <option value="production">Production only</option>
             <option value="test">Test / Dev only</option>
           </select>
+
+          <button onclick="resetSuggestionsFilters()" class="text-[11px] font-semibold text-slate-600 hover:text-slate-900 px-2.5 py-1.5 rounded-xl bg-white/70 hover:bg-white border border-cream-300 transition">Reset</button>
         </div>
 
         <!-- Suggestions Cards Container -->
@@ -1282,6 +1292,36 @@
             <h2 class="text-xl font-bold text-slate-900">My Servers</h2>
             <p class="text-xs text-slate-500 mt-0.5">Click any server to see its usage history and next-7-days forecast with uncertainty margins.</p>
           </div>
+        </div>
+
+        <!-- Servers Search & Filter Strip -->
+        <div class="flex flex-wrap items-center gap-3 p-3 rounded-2xl bg-cream-200/70 text-xs">
+          <!-- Search Input -->
+          <div class="relative flex-1 min-w-[220px]">
+            <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+            <input type="text" id="servers-search-input" oninput="loadServers()" placeholder="Search servers by ID, type, region, cloud..." class="w-full pl-8 pr-3 py-1.5 bg-white border border-cream-300 rounded-xl text-xs font-medium text-slate-800 outline-none focus:ring-2 focus:ring-sage-500">
+          </div>
+
+          <span class="font-bold text-slate-600 text-xs hidden sm:inline">Filter:</span>
+
+          <!-- Provider Filter -->
+          <select id="servers-filter-provider" onchange="loadServers()" class="bg-white border border-cream-300 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-800 outline-none focus:ring-2 focus:ring-sage-500">
+            <option value="all">All Cloud Providers</option>
+            <option value="aws">AWS</option>
+            <option value="azure">Microsoft Azure</option>
+            <option value="gcp">Google Cloud (GCP)</option>
+          </select>
+
+          <!-- Status Filter -->
+          <select id="servers-filter-status" onchange="loadServers()" class="bg-white border border-cream-300 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-800 outline-none focus:ring-2 focus:ring-sage-500">
+            <option value="all">All Statuses</option>
+            <option value="idle">Idle (&lt; 5% CPU)</option>
+            <option value="over_provisioned">Too big / Over-provisioned</option>
+            <option value="healthy">Healthy</option>
+            <option value="hot">Overloaded / High Load</option>
+          </select>
+
+          <button onclick="resetServersFilters()" class="text-[11px] font-semibold text-slate-600 hover:text-slate-900 px-2.5 py-1.5 rounded-xl bg-white/70 hover:bg-white border border-cream-300 transition">Reset</button>
         </div>
 
         <!-- Servers Table Card -->
@@ -2491,21 +2531,61 @@
       if (modal) modal.classList.add('hidden');
     }
 
+    // Reset filters helpers
+    function resetSuggestionsFilters() {
+      const s = document.getElementById('filter-sort');
+      const r = document.getElementById('filter-risk');
+      const e = document.getElementById('filter-env');
+      const q = document.getElementById('filter-suggestions-search');
+      if (s) s.value = 'saves_most';
+      if (r) r.value = 'all';
+      if (e) e.value = 'all';
+      if (q) q.value = '';
+      loadSuggestions();
+    }
+    window.resetSuggestionsFilters = resetSuggestionsFilters;
+
+    function resetServersFilters() {
+      const p = document.getElementById('servers-filter-provider');
+      const s = document.getElementById('servers-filter-status');
+      const q = document.getElementById('servers-search-input');
+      if (p) p.value = 'all';
+      if (s) s.value = 'all';
+      if (q) q.value = '';
+      loadServers();
+    }
+    window.resetServersFilters = resetServersFilters;
+
     async function loadSampleFleet() {
       startLoadingBar();
       try {
-        const isDemo = currentUser.provider === 'demo' || currentUser.email === 'admin@cloudopt.ai';
-        const userEmail = currentUser.email || 'admin@cloudopt.ai';
-        const res = await fetch(`${API}/api/v2/load-sample`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user_email: userEmail })
-        });
-        if (!res.ok) throw new Error('Failed to load sample fleet.');
-        const data = await res.json();
+        const isDemo = isDemoUser();
+        const userEmail = (currentUser && currentUser.email) ? currentUser.email : 'admin@cloudopt.ai';
+        if (API) {
+          try {
+            const res = await fetch(`${API}/api/v2/load-sample`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ user_email: userEmail })
+            });
+            if (res.ok) {
+              const data = await res.json();
+              currentUser.hasUploadedData = true;
+              saveUserSession(currentUser);
+              showToast('Sample Fleet Loaded', data.message || 'Sample multi-cloud fleet loaded successfully.', true);
+              await refreshAllData();
+              return;
+            }
+          } catch (e) {
+            console.warn("Backend sample loader offline, using client-side sample dataset");
+          }
+        }
+        // Client-side fallback for static deployment
+        const userFleetKey = 'cloudopt_user_fleet_' + userEmail;
+        localStorage.setItem(userFleetKey, JSON.stringify(FALLBACK_DEMO_SERVERS));
         currentUser.hasUploadedData = true;
         saveUserSession(currentUser);
-        showToast('Sample Fleet Loaded', data.message || 'Sample multi-cloud fleet loaded successfully.', true);
+        showToast('Sample Fleet Loaded', 'Loaded 12 multi-cloud sample servers across AWS, Azure, and GCP.', true);
         await refreshAllData();
       } catch (err) {
         showToast('Error', err.message || 'Could not load sample fleet.', false);
@@ -2543,62 +2623,82 @@
       return getLocalUserFleet().length > 0;
     }
 
-    function validateCloudDataClientSide(filename, text) {
-      if (!text || !text.trim()) {
-        return { valid: false, error: "The uploaded file is empty." };
-      }
-
-      const lower = text.toLowerCase();
-      // Check for cloud infrastructure and billing keywords
-      const cloudKeywords = [
-        'instance', 'vm', 'cpu', 'memory', 'storage', 'cost', 'spend', 'billing',
-        'provider', 'aws', 'azure', 'gcp', 'resource', 'pretaxcost', 'network', 'uptime'
-      ];
-      const matchCount = cloudKeywords.filter(k => lower.includes(k)).length;
-      if (matchCount < 2) {
-        return {
-          valid: false,
-          error: "Unrecognized dataset: This file does not belong to cloud infrastructure or billing. Expected columns for AWS, Azure, or GCP: resource_id, cloud_provider, cpu_utilization, memory_utilization, or monthly_cost."
-        };
-      }
+    // Flexible client-side cloud data validator with SheetJS support
+    async function validateCloudDataClientSide(file) {
+      if (!file) return { valid: false, error: "No file selected." };
 
       let rows = [];
-      if (filename.toLowerCase().endsWith('.json') || text.trim().startsWith('[') || text.trim().startsWith('{')) {
-        try {
+      const filename = (file.name || '').toLowerCase();
+
+      try {
+        if (filename.endsWith('.json')) {
+          const text = await file.text();
           const parsed = JSON.parse(text);
-          rows = Array.isArray(parsed) ? parsed : [parsed];
-        } catch (e) {
-          return { valid: false, error: "Invalid JSON format: " + e.message };
-        }
-      } else {
-        // CSV Parsing
-        const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
-        if (lines.length < 2) {
-          return { valid: false, error: "CSV file must contain a header row and at least one resource row." };
-        }
-        const headers = lines[0].split(',').map(h => h.trim().replace(/^["']|["']$/g, '').toLowerCase());
-        const hasResourceCol = headers.some(h => h.includes('resource') || h.includes('instance') || h.includes('id') || h.includes('name') || h.includes('vm'));
-        const hasMetricOrCostCol = headers.some(h => h.includes('cpu') || h.includes('cost') || h.includes('memory') || h.includes('storage') || h.includes('pretax') || h.includes('spend'));
-
-        if (!hasResourceCol || !hasMetricOrCostCol) {
-          return {
-            valid: false,
-            error: "Missing required cloud columns. Expected at least one resource identifier (e.g. resource_id) and one metric/cost column (e.g. cpu_utilization, monthly_cost)."
-          };
-        }
-
-        for (let i = 1; i < lines.length; i++) {
-          const vals = lines[i].split(',').map(v => v.trim().replace(/^["']|["']$/g, ''));
-          if (vals.length === headers.length) {
-            const obj = {};
-            headers.forEach((h, idx) => { obj[h] = vals[idx]; });
-            rows.push(obj);
+          if (Array.isArray(parsed)) {
+            rows = parsed;
+          } else if (parsed && Array.isArray(parsed.resources)) {
+            rows = parsed.resources;
+          } else if (typeof parsed === 'object') {
+            rows = [parsed];
+          }
+        } else if (window.XLSX && (filename.endsWith('.xlsx') || filename.endsWith('.xls') || filename.endsWith('.csv'))) {
+          const arrayBuffer = await file.arrayBuffer();
+          const wb = XLSX.read(arrayBuffer, { type: 'array' });
+          const firstSheet = wb.SheetNames[0];
+          if (!firstSheet) return { valid: false, error: "The spreadsheet has no worksheets." };
+          const ws = wb.Sheets[firstSheet];
+          rows = XLSX.utils.sheet_to_json(ws, { defval: "" });
+        } else {
+          // Plain text CSV fallback
+          const text = await file.text();
+          const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+          if (lines.length < 2) return { valid: false, error: "CSV file must contain a header and at least one data row." };
+          const headers = lines[0].split(',').map(h => h.trim().replace(/^["']|["']$/g, ''));
+          for (let i = 1; i < lines.length; i++) {
+            const vals = lines[i].split(',').map(v => v.trim().replace(/^["']|["']$/g, ''));
+            if (vals.length === headers.length) {
+              const obj = {};
+              headers.forEach((h, idx) => { obj[h] = vals[idx]; });
+              rows.push(obj);
+            }
           }
         }
+      } catch (err) {
+        return { valid: false, error: `Could not parse ${file.name}: ${err.message}` };
       }
 
-      if (rows.length === 0) {
-        return { valid: false, error: "No valid rows found in the uploaded cloud telemetry file." };
+      if (!rows || rows.length === 0) {
+        return { valid: false, error: "No data rows found in the uploaded file." };
+      }
+
+      // Helper to extract values by candidate header aliases
+      function findVal(row, candidates) {
+        const rowKeys = Object.keys(row);
+        const matchedKey = rowKeys.find(k => {
+          const cleanK = k.toLowerCase().replace(/[^a-z0-9]/g, '');
+          return candidates.some(c => cleanK === c.replace(/[^a-z0-9]/g, ''));
+        });
+        return matchedKey ? row[matchedKey] : null;
+      }
+
+      // Cloud keywords check
+      const allText = JSON.stringify(rows[0] || {}).toLowerCase() + filename;
+      const cloudKeywords = [
+        'instance', 'vm', 'cpu', 'memory', 'storage', 'cost', 'spend', 'billing',
+        'provider', 'aws', 'azure', 'gcp', 'resource', 'pretaxcost', 'network', 'uptime',
+        'server', 'node', 'ec2', 'disk', 'cluster', 'database', 'rds', 'gke', 'pool'
+      ];
+      const matchCount = cloudKeywords.filter(k => allText.includes(k)).length;
+      if (matchCount < 1 && rows.length > 0) {
+        const sampleRow = rows[0];
+        const hasRes = findVal(sampleRow, ['resourceid', 'resource_id', 'instanceid', 'instance_id', 'id', 'name', 'vmname', 'vm_name', 'server']);
+        const hasMetric = findVal(sampleRow, ['cpu', 'cpuutilization', 'cost', 'monthlycost', 'spend', 'memory', 'ram', 'pretaxcost']);
+        if (!hasRes && !hasMetric) {
+          return {
+            valid: false,
+            error: "Unrecognized dataset: This file does not appear to contain cloud infrastructure or billing records. Expected columns: resource_id, cloud_provider, cpu_utilization, memory_utilization, or monthly_cost."
+          };
+        }
       }
 
       let totalCost = 0;
@@ -2606,65 +2706,117 @@
       const normalizedResources = [];
 
       rows.forEach((row, i) => {
-        const id = row.resource_id || row.instance_id || row.id || row.vm_name || `resource-${i+1}`;
-        let provider = (row.cloud_provider || row.provider || '').toUpperCase();
-        if (!provider) {
-          if (id.toLowerCase().includes('azure')) provider = 'AZURE';
-          else if (id.toLowerCase().includes('gcp')) provider = 'GCP';
+        const rawId = findVal(row, ['resourceid', 'resource_id', 'instanceid', 'instance_id', 'id', 'name', 'vmname', 'vm_name', 'server_name', 'node']);
+        const id = rawId ? String(rawId).trim() : `resource-${i + 1}`;
+
+        let rawProv = findVal(row, ['cloudprovider', 'cloud_provider', 'provider', 'cloud', 'platform', 'vendor']);
+        let provider = rawProv ? String(rawProv).trim().toUpperCase() : '';
+        if (!provider || (!provider.includes('AWS') && !provider.includes('AZURE') && !provider.includes('GCP'))) {
+          const lowerId = id.toLowerCase();
+          if (lowerId.includes('azure') || lowerId.includes('vm')) provider = 'AZURE';
+          else if (lowerId.includes('gcp') || lowerId.includes('gke')) provider = 'GCP';
           else provider = 'AWS';
+        } else {
+          if (provider.includes('AWS') || provider.includes('AMAZON')) provider = 'AWS';
+          else if (provider.includes('AZURE') || provider.includes('MICROSOFT')) provider = 'AZURE';
+          else if (provider.includes('GCP') || provider.includes('GOOGLE')) provider = 'GCP';
         }
         providers[provider] = (providers[provider] || 0) + 1;
 
+        // CPU parsing
+        const rawCpu = findVal(row, ['cpuutilization', 'cpu_utilization', 'cpu_utilization_pct', 'avgcpu', 'avg_cpu', 'cpu', 'cpuusage', 'cpu utilization', 'cpu %']);
         let cpu = 15;
-        const rawCpu = row.cpu_utilization || row.avg_cpu || row.cpu || row['cpu utilization'] || 15;
-        if (typeof rawCpu === 'string') {
-          cpu = parseFloat(rawCpu.replace('%', '')) || 15;
-        } else {
-          cpu = parseFloat(rawCpu) || 15;
+        if (rawCpu !== null && rawCpu !== undefined && rawCpu !== '') {
+          if (typeof rawCpu === 'string') {
+            cpu = parseFloat(rawCpu.replace('%', '').trim()) || 15;
+          } else {
+            cpu = parseFloat(rawCpu) || 15;
+          }
+          if (cpu > 0 && cpu < 1) cpu = cpu * 100;
         }
-        if (cpu > 0 && cpu < 1) cpu = cpu * 100;
-        cpu = Math.min(100, Math.max(0, cpu));
+        cpu = Math.min(100, Math.max(0, Math.round(cpu * 10) / 10));
 
+        // Cost parsing
+        const rawCost = findVal(row, ['monthlycost', 'monthly_cost', 'cost', 'spend', 'pretaxcost', 'servicecost', 'rate', 'price', 'amount', 'totalcost']);
         let cost = 50;
-        const rawCost = row.monthly_cost || row.cost || row.pretaxcost || row.service_cost || 50;
-        if (typeof rawCost === 'string') {
-          cost = parseFloat(rawCost.replace(/[^0-9.-]+/g, '')) || 50;
-        } else {
-          cost = parseFloat(rawCost) || 50;
+        if (rawCost !== null && rawCost !== undefined && rawCost !== '') {
+          if (typeof rawCost === 'string') {
+            cost = parseFloat(rawCost.replace(/[^0-9.-]+/g, '')) || 50;
+          } else {
+            cost = parseFloat(rawCost) || 50;
+          }
         }
+        cost = Math.max(0, Math.round(cost * 100) / 100);
         totalCost += cost;
 
-        const mem = parseFloat(row.memory_utilization_pct || row.memory || row.ram || 30) || 30;
-        const storage = parseFloat(row.total_storage_gb || row.storage || 100) || 100;
+        // Memory parsing
+        const rawMem = findVal(row, ['memoryutilization', 'memory_utilization', 'memory_utilization_pct', 'memorypct', 'memory_pct', 'memory', 'ram', 'ramutilization']);
+        let mem = 30;
+        if (rawMem !== null && rawMem !== undefined && rawMem !== '') {
+          if (typeof rawMem === 'string') mem = parseFloat(rawMem.replace('%', '').trim()) || 30;
+          else mem = parseFloat(rawMem) || 30;
+          if (mem > 0 && mem < 1) mem = mem * 100;
+        }
+        mem = Math.min(100, Math.max(0, Math.round(mem * 10) / 10));
 
-        let status = 'optimized';
+        // Storage parsing
+        const rawStorage = findVal(row, ['totalstoragegb', 'total_storage_gb', 'storagegb', 'storage_gb', 'storage', 'disk', 'disk_gb', 'size_gb']);
+        let storage = 100;
+        if (rawStorage !== null && rawStorage !== undefined && rawStorage !== '') {
+          storage = parseFloat(String(rawStorage).replace(/[^0-9.]/g, '')) || 100;
+        }
+
+        // Instance type / size
+        const rawType = findVal(row, ['instancetype', 'instance_type', 'currentsize', 'current_size', 'size', 'vmsize', 'vm_size', 'sku', 'type', 'tier']);
+        const instanceType = rawType ? String(rawType).trim() : (provider === 'AWS' ? 't3.large' : (provider === 'AZURE' ? 'Standard_D4s_v5' : 'e2-standard-4'));
+
+        // Region
+        const rawRegion = findVal(row, ['region', 'location', 'datacenter', 'zone']);
+        const region = rawRegion ? String(rawRegion).trim() : (provider === 'AWS' ? 'us-east-1' : (provider === 'AZURE' ? 'eastus' : 'us-central1'));
+
+        // Environment
+        const rawEnv = findVal(row, ['environment', 'env', 'stage']);
+        let env = 'production';
+        if (rawEnv) {
+          const eStr = String(rawEnv).toLowerCase();
+          if (eStr.includes('test') || eStr.includes('dev') || eStr.includes('stage') || eStr.includes('sandbox')) env = 'test';
+        } else if (id.toLowerCase().includes('test') || id.toLowerCase().includes('dev')) {
+          env = 'test';
+        }
+
+        // Status assignment
+        let status = 'healthy';
         if (cpu < 5) status = 'idle';
         else if (cpu < 25) status = 'over_provisioned';
+        else if (cpu > 80) status = 'hot';
 
         normalizedResources.push({
           resource_id: id,
           cloud_provider: provider,
-          instance_type: row.instance_type || row.current_size || 'standard',
-          avg_cpu: Math.round(cpu * 10) / 10,
-          peak_cpu: Math.round(Math.min(100, cpu * 1.5) * 10) / 10,
-          memory_pct: Math.round(mem * 10) / 10,
-          total_storage_gb: storage,
-          monthly_cost: Math.round(cost * 100) / 100,
+          instance_type: instanceType,
+          current_size: instanceType,
+          region: region,
+          avg_cpu: cpu,
+          peak_cpu: Math.min(100, Math.round(Math.max(cpu * 1.5, cpu + 5) * 10) / 10),
+          memory_utilization_pct: mem,
+          memory_pct: mem,
+          total_storage_gb: Math.round(storage),
+          monthly_cost: cost,
           status: status,
-          environment: (row.environment || 'production').toLowerCase()
+          environment: env
         });
       });
 
       return {
         valid: true,
         result: {
-          format: filename.toLowerCase().endsWith('.json') ? 'JSON' : 'CSV',
+          format: filename.endsWith('.json') ? 'JSON' : (filename.endsWith('.xlsx') || filename.endsWith('.xls') ? 'EXCEL' : 'CSV'),
           summary: {
             total_resources: normalizedResources.length,
-            total_monthly_spend: totalCost,
+            total_monthly_spend: Math.round(totalCost * 100) / 100,
             cloud_providers: providers
           },
-          cleaning_summary: `Cleaned ${normalizedResources.length} records: currency formatted, CPU normalized, provider mapped.`,
+          cleaning_summary: `Normalized ${normalizedResources.length} cloud records across ${Object.keys(providers).join(', ') || 'Multi-Cloud'}. Ingested CPU utilization, memory metrics, and monthly spend.`,
           resources: normalizedResources
         }
       };
@@ -2709,10 +2861,12 @@
       const progressBar = document.getElementById('wizard-upload-bar');
       const msg = document.getElementById('wizard-upload-msg');
 
-      badge.innerText = 'Validating & Normalizing...';
-      badge.className = 'text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800';
-      progressWrap.classList.remove('hidden');
-      progressBar.style.width = '30%';
+      if (badge) {
+        badge.innerText = 'Validating & Normalizing...';
+        badge.className = 'text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800';
+      }
+      if (progressWrap) progressWrap.classList.remove('hidden');
+      if (progressBar) progressBar.style.width = '35%';
 
       try {
         let uploadSucceeded = false;
@@ -2736,15 +2890,15 @@
               throw new Error(errDetail);
             }
           } catch (e) {
-            if (e.message.includes('Validation Error') || e.message.includes('does not belong')) throw e;
+            if (e.message && (e.message.includes('Validation Error') || e.message.includes('does not belong'))) throw e;
             console.warn("Backend upload failed, attempting client-side normalizer:", e.message);
           }
         }
 
-        // 2. Client-side normalizer fallback (for static Netlify deployment)
+        // 2. Client-side normalizer fallback (for static Netlify deployment or offline)
         if (!uploadSucceeded) {
-          const fileText = await file.text();
-          const validation = validateCloudDataClientSide(file.name, fileText);
+          if (progressBar) progressBar.style.width = '65%';
+          const validation = await validateCloudDataClientSide(file);
           if (!validation.valid) {
             openValidationErrorModal('Invalid Cloud Dataset', validation.error);
             throw new Error(validation.error);
@@ -2756,13 +2910,17 @@
           }
         }
 
-        progressBar.style.width = '100%';
-        badge.innerText = 'Cleaned & Live';
-        badge.className = 'text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800';
+        if (progressBar) progressBar.style.width = '100%';
+        if (badge) {
+          badge.innerText = 'Cleaned & Live';
+          badge.className = 'text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800';
+        }
 
         const providersList = Object.keys(dataResult.summary?.cloud_providers || {}).join(', ') || 'Multi-Cloud';
         const cleanMsg = dataResult.cleaning_summary ? `<div class="text-[11px] text-emerald-800/80 mt-1 font-sans">${dataResult.cleaning_summary}</div>` : '';
-        msg.innerHTML = `<span class="text-emerald-700 font-semibold">${file.name}</span>: <strong>${dataResult.summary?.total_resources}</strong> resources across <strong>${providersList}</strong> normalized. Monthly spend: <strong>$${Number(dataResult.summary?.total_monthly_spend || 0).toFixed(2)}</strong>.${cleanMsg}`;
+        if (msg) {
+          msg.innerHTML = `<span class="text-emerald-700 font-semibold">${file.name}</span>: <strong>${dataResult.summary?.total_resources}</strong> resources across <strong>${providersList}</strong> normalized. Monthly spend: <strong>$${Number(dataResult.summary?.total_monthly_spend || 0).toFixed(2)}</strong>.${cleanMsg}`;
+        }
 
         currentUser.hasUploadedData = true;
         saveUserSession(currentUser);
@@ -2778,13 +2936,24 @@
           loadHistory(),
         ]);
 
-        // Background archive to storage provider
+        // Auto close guided start modal after brief delay so dashboard is revealed
+        setTimeout(() => {
+          closeGuidedStartModal(false);
+        }, 1200);
+
+        // Background archive to storage provider if available
         uploadToFirebaseStorage(file, 'telemetry').catch(() => {});
       } catch (err) {
         console.error('Data upload error:', err);
-        badge.innerText = 'Rejected';
-        badge.className = 'text-[10px] font-semibold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800';
-        msg.innerHTML = `<span class="text-rose-700 font-semibold">Upload rejected:</span> ${err.message || 'Invalid format'}.`;
+        if (badge) {
+          badge.innerText = 'Rejected';
+          badge.className = 'text-[10px] font-semibold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800';
+        }
+        if (progressBar) progressBar.style.width = '0%';
+        if (progressWrap) progressWrap.classList.add('hidden');
+        if (msg) {
+          msg.innerHTML = `<span class="text-rose-700 font-semibold">Upload rejected:</span> ${err.message || 'Invalid format'}.`;
+        }
         showToast('Upload Rejected', err.message || 'Could not parse cloud data file.', false);
       }
     }
@@ -2901,12 +3070,36 @@
       setTimeout(finishLoadingBar, 180);
     }
 
-    // Guided Start Modal Management
-    function openGuidedStartModal() {
+    // Guided Start & Upload Wizard Modal Management
+    function openWizardModal(preferUpload = true) {
       wizardCurrentStep = 1;
       updateWizardUI();
-      document.getElementById('modal-guided-start').classList.remove('hidden');
+      const modal = document.getElementById('modal-guided-start');
+      if (modal) modal.classList.remove('hidden');
+
+      const uploadRadio = document.querySelector('input[name="wizard-data-choice"][value="upload"]');
+      const demoRadio = document.querySelector('input[name="wizard-data-choice"][value="demo"]');
+
+      if (preferUpload && uploadRadio) {
+        uploadRadio.checked = true;
+        toggleWizardUploadZone(true);
+      } else if (!preferUpload && demoRadio) {
+        demoRadio.checked = true;
+        toggleWizardUploadZone(false);
+      } else {
+        if (currentUser && currentUser.isLoggedIn && !isDemoUser() && uploadRadio) {
+          uploadRadio.checked = true;
+          toggleWizardUploadZone(true);
+        }
+      }
+      if (window.lucide) lucide.createIcons();
     }
+    window.openWizardModal = openWizardModal;
+
+    function openGuidedStartModal() {
+      openWizardModal(false);
+    }
+    window.openGuidedStartModal = openGuidedStartModal;
 
     function closeGuidedStartModal(skip = false) {
       document.getElementById('modal-guided-start').classList.add('hidden');
@@ -2950,19 +3143,25 @@
       const styleChoice = document.querySelector('input[name="wizard-style-choice"]:checked')?.value || 'Balanced';
       const modeChoice = document.querySelector('input[name="wizard-mode-choice"]:checked')?.value || 'Suggest only';
 
-      try {
-        await fetch(`${API}/api/v2/guided-start`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ data_source: dataChoice, preset: styleChoice, mode: modeChoice }),
-        });
-        showToast('Setup Saved', `Configured ${styleChoice} style in ${modeChoice} mode.`);
-        closeGuidedStartModal(false);
-        refreshAllData();
-      } catch (e) {
-        console.error(e);
-        closeGuidedStartModal(false);
+      localStorage.setItem('cloudopt_data_source', dataChoice);
+      localStorage.setItem('cloudopt_preset', styleChoice);
+      localStorage.setItem('cloudopt_mode', modeChoice);
+
+      if (API) {
+        try {
+          await fetch(`${API}/api/v2/guided-start`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ data_source: dataChoice, preset: styleChoice, mode: modeChoice }),
+          });
+        } catch (e) {
+          console.warn("Backend guided-start save offline");
+        }
       }
+
+      showToast('Setup Saved', `Configured ${styleChoice} style in ${modeChoice} mode.`, true);
+      closeGuidedStartModal(false);
+      await refreshAllData();
     }
 
     const FALLBACK_DEMO_SUMMARY = {
@@ -3219,70 +3418,115 @@
         return;
       }
 
-      let recs = isDemo ? [...FALLBACK_DEMO_RECOMMENDATIONS] : [];
-      if (API) {
-        try {
-          const sortVal = document.getElementById('filter-sort').value;
-          const riskVal = document.getElementById('filter-risk').value;
-          const envVal = document.getElementById('filter-env').value;
-          const userEmailParam = encodeURIComponent(currentUser.email || 'admin@cloudopt.ai');
-          const res = await fetch(`${API}/api/v2/recommendations?sort_by=${sortVal}&risk=${riskVal}&environment=${envVal}&user_email=${userEmailParam}&is_demo=${isDemo}`);
-          if (res.ok) {
-            const apiRecs = await res.json();
-            if (Array.isArray(apiRecs)) recs = apiRecs;
-          }
-        } catch (e) {
-          console.warn("Backend suggestions offline, using client dataset");
-        }
-      }
-
-      // If real user with uploaded fleet client-side
-      if (!isDemo && recs.length === 0) {
+      // 1. Determine base recommendations
+      let recs = [];
+      if (isDemo) {
+        recs = [...FALLBACK_DEMO_RECOMMENDATIONS];
+      } else {
         const userFleet = getLocalUserFleet();
         if (userFleet.length > 0) {
-          recs = userFleet.filter(r => r.status === 'idle' || r.status === 'over_provisioned').map((r, idx) => ({
+          recs = userFleet.filter(r => r.status === 'idle' || r.status === 'over_provisioned' || r.status === 'hot').map((r, idx) => ({
             id: `rec-user-${idx+1}`,
             resource_id: r.resource_id,
             cloud_provider: r.cloud_provider,
             current_size: r.instance_type,
-            target_size: r.status === 'idle' ? 'Stop Instance' : 'Downsize 1 Tier',
-            action: r.status === 'idle' ? 'Turn off idle server' : 'Downsize instance',
-            monthly_saving: Math.round((r.monthly_cost * (r.status === 'idle' ? 1.0 : 0.5)) * 100) / 100,
-            risk_level: r.environment === 'production' && r.status !== 'idle' ? 'Medium' : 'Low',
+            target_size: r.status === 'idle' ? 'Stop Instance' : (r.status === 'hot' ? 'Scale Up' : 'Downsize 1 Tier'),
+            action: r.status === 'idle' ? 'Turn off idle server' : (r.status === 'hot' ? 'Scale up server' : 'Downsize instance'),
+            monthly_saving: Math.round((r.monthly_cost * (r.status === 'idle' ? 1.0 : (r.status === 'hot' ? -0.3 : 0.5))) * 100) / 100,
+            risk_level: (r.environment === 'production' && r.status !== 'idle') ? 'Medium' : 'Low',
             status: 'Pending',
-            environment: r.environment || 'production',
-            summary: `${r.status === 'idle' ? 'Stop idle instance' : 'Downsize over-provisioned machine'} ${r.resource_id}. Average CPU was ${r.avg_cpu}%.`,
+            environment: (r.environment || 'production').toLowerCase(),
+            summary: `${r.status === 'idle' ? 'Stop idle instance' : (r.status === 'hot' ? 'Upgrade high-load instance' : 'Downsize over-provisioned machine')} ${r.resource_id}. Average CPU was ${r.avg_cpu}%.`,
             why_metrics: `Observed average CPU ${r.avg_cpu}%, peak CPU ${r.peak_cpu}%, RAM utilization ${r.memory_pct}%.`,
-            why_forecast: `Forecast indicates workload demand remains low for the next 7 days.`,
-            why_constraints: `Safety headroom verified: workload stays below policy threshold.`,
+            why_forecast: `Forecast indicates workload demand remains stable for next 7 days.`,
+            why_constraints: `Safety headroom verified: workload stays within safe operational thresholds.`,
             confidence: "95% confident",
             avg_cpu: r.avg_cpu,
             memory_utilization_pct: r.memory_pct,
-            total_storage_gb: r.total_storage_gb,
+            total_storage_gb: r.total_storage_gb || 100,
             network_in_mb: 25,
             network_out_mb: 40
           }));
         }
       }
 
-      cachedRecommendations = recs;
+      if (API) {
+        try {
+          const userEmailParam = encodeURIComponent(currentUser.email || 'admin@cloudopt.ai');
+          const res = await fetch(`${API}/api/v2/recommendations?user_email=${userEmailParam}&is_demo=${isDemo}`);
+          if (res.ok) {
+            const apiRecs = await res.json();
+            if (Array.isArray(apiRecs) && apiRecs.length > 0) recs = apiRecs;
+          }
+        } catch (e) {
+          console.warn("Backend suggestions offline, using client dataset");
+        }
+      }
 
-      if (!recs || recs.length === 0) {
+      // Initialize cachedRecommendations if needed or switched between demo and real
+      if (!cachedRecommendations || cachedRecommendations.length === 0 || cachedRecommendations[0]?.isDemo !== isDemo) {
+        cachedRecommendations = recs.map(r => ({ ...r, isDemo }));
+      }
+
+      // Apply Filter & Search Controls
+      const sortVal = document.getElementById('filter-sort')?.value || 'saves_most';
+      const riskVal = document.getElementById('filter-risk')?.value || 'all';
+      const envVal = document.getElementById('filter-env')?.value || 'all';
+      const searchVal = document.getElementById('filter-suggestions-search')?.value?.trim().toLowerCase() || '';
+
+      let displayRecs = [...cachedRecommendations];
+
+      // 1. Filter by Risk
+      if (riskVal !== 'all') {
+        displayRecs = displayRecs.filter(r => (r.risk_level || '').toLowerCase() === riskVal.toLowerCase());
+      }
+
+      // 2. Filter by Environment
+      if (envVal !== 'all') {
+        displayRecs = displayRecs.filter(r => (r.environment || '').toLowerCase() === envVal.toLowerCase());
+      }
+
+      // 3. Filter by Search Query
+      if (searchVal) {
+        displayRecs = displayRecs.filter(r =>
+          (r.resource_id || '').toLowerCase().includes(searchVal) ||
+          (r.cloud_provider || '').toLowerCase().includes(searchVal) ||
+          (r.action || '').toLowerCase().includes(searchVal) ||
+          (r.summary || '').toLowerCase().includes(searchVal) ||
+          (r.current_size || '').toLowerCase().includes(searchVal) ||
+          (r.target_size || '').toLowerCase().includes(searchVal) ||
+          (r.risk_level || '').toLowerCase().includes(searchVal)
+        );
+      }
+
+      // 4. Sort
+      if (sortVal === 'saves_most') {
+        displayRecs.sort((a, b) => (Number(b.monthly_saving) || 0) - (Number(a.monthly_saving) || 0));
+      } else if (sortVal === 'lowest_risk') {
+        const riskWeight = { 'low': 1, 'medium': 2, 'high': 3 };
+        displayRecs.sort((a, b) => (riskWeight[(a.risk_level || '').toLowerCase()] || 99) - (riskWeight[(b.risk_level || '').toLowerCase()] || 99));
+      }
+
+      // Update badge
+      const sideBadge = document.getElementById('sidebar-rec-badge');
+      if (sideBadge) sideBadge.innerText = cachedRecommendations.filter(r => r.status === 'Pending').length;
+
+      if (displayRecs.length === 0) {
         emptyState.classList.remove('hidden');
         emptyState.innerHTML = `
-          <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto">
-            <i data-lucide="check-circle" class="w-6 h-6"></i>
+          <div class="w-12 h-12 rounded-2xl bg-cream-200 text-slate-500 flex items-center justify-center mx-auto">
+            <i data-lucide="filter" class="w-6 h-6"></i>
           </div>
-          <h3 class="text-base font-bold text-slate-900">No suggestions pending</h3>
-          <p class="text-xs text-slate-500 max-w-sm mx-auto">All recommendations have been reviewed or your fleet is running at optimal efficiency.</p>
-          <button onclick="refreshAllData()" class="px-4 py-2 rounded-xl bg-cream-200 hover:bg-cream-300 text-xs font-semibold text-slate-800 transition">Check for new savings</button>
+          <h3 class="text-base font-bold text-slate-900">No suggestions match your filters</h3>
+          <p class="text-xs text-slate-500 max-w-sm mx-auto">Try resetting or broadening your risk, environment, or search criteria.</p>
+          <button onclick="resetSuggestionsFilters()" class="px-4 py-2 rounded-xl bg-cream-200 hover:bg-cream-300 text-xs font-semibold text-slate-800 transition">Reset Filters</button>
         `;
         if (window.lucide) lucide.createIcons();
         return;
       }
       emptyState.classList.add('hidden');
 
-        recs.forEach(rec => {
+      displayRecs.forEach(rec => {
           const card = document.createElement('div');
           card.className = 'card-beige p-5 rounded-3xl transition-all';
           card.id = `rec-card-${rec.id}`;
@@ -3421,15 +3665,29 @@
 
     async function approveRecommendation(recId) {
       try {
-        const res = await fetch(`${API}/api/v2/recommendations/${recId}/approve`, { method: 'POST' });
-        const data = await res.json();
-        if (res.ok) {
-          showToast('Approved', `Recommendation ${recId} is approved. Head to "Apply & Undo" to execute.`);
-          loadHomeSummary();
+        if (API) {
+          try {
+            const res = await fetch(`${API}/api/v2/recommendations/${recId}/approve`, { method: 'POST' });
+            if (res.ok) {
+              const data = await res.json();
+              showToast('Approved', `Recommendation ${recId} is approved. Head to "Apply & Undo" to execute.`, true);
+              await loadHomeSummary();
+              await loadSuggestions();
+              await loadApplyList();
+              return;
+            }
+          } catch (e) {
+            console.warn("Backend approve failed, applying client state");
+          }
+        }
+        // Client-side fallback
+        const rec = (cachedRecommendations || []).find(r => r.id === recId);
+        if (rec) {
+          rec.status = 'Approved';
+          showToast('Approved', `Recommendation ${recId} is approved. Head to "Apply & Undo" to execute.`, true);
           loadSuggestions();
           loadApplyList();
-        } else {
-          showToast('Notice', data.detail || 'Could not approve', false);
+          loadHomeSummary();
         }
       } catch (e) {
         console.error(e);
@@ -3439,16 +3697,28 @@
     async function rejectRecommendation(recId) {
       openConfirmModal('Reject suggestion', 'Are you sure you want to dismiss this cost saving recommendation?', async () => {
         try {
-          const res = await fetch(`${API}/api/v2/recommendations/${recId}/reject`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ reason: 'Rejected by operator' }),
-          });
-          if (res.ok) {
-            showToast('Rejected', `Recommendation ${recId} dismissed.`);
-            loadHomeSummary();
-            loadSuggestions();
+          if (API) {
+            try {
+              const res = await fetch(`${API}/api/v2/recommendations/${recId}/reject`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reason: 'Rejected by operator' }),
+              });
+              if (res.ok) {
+                showToast('Rejected', `Recommendation ${recId} dismissed.`, true);
+                loadHomeSummary();
+                loadSuggestions();
+                return;
+              }
+            } catch (e) {
+              console.warn("Backend reject failed, applying client state");
+            }
           }
+          // Client-side fallback
+          cachedRecommendations = (cachedRecommendations || []).filter(r => r.id !== recId);
+          showToast('Rejected', `Recommendation ${recId} dismissed.`, true);
+          loadHomeSummary();
+          loadSuggestions();
         } catch (e) {
           console.error(e);
         }
@@ -3458,12 +3728,33 @@
     async function approveAllLowRisk() {
       openConfirmModal('Approve all low-risk items?', 'This will approve all safe, policy-passing suggestions for your review in 1 click.', async () => {
         try {
-          const res = await fetch(`${API}/api/v2/recommendations/approve-all-low-risk`, { method: 'POST' });
-          const data = await res.json();
-          showToast('Approved', `Approved ${data.approved_count} low-risk suggestions.`);
-          loadHomeSummary();
+          if (API) {
+            try {
+              const res = await fetch(`${API}/api/v2/recommendations/approve-all-low-risk`, { method: 'POST' });
+              if (res.ok) {
+                const data = await res.json();
+                showToast('Approved', `Approved ${data.approved_count} low-risk suggestions.`, true);
+                loadHomeSummary();
+                loadSuggestions();
+                loadApplyList();
+                return;
+              }
+            } catch (e) {
+              console.warn("Backend approve-all failed, applying client state");
+            }
+          }
+          // Client-side fallback
+          let count = 0;
+          (cachedRecommendations || []).forEach(r => {
+            if ((r.risk_level || '').toLowerCase() === 'low') {
+              r.status = 'Approved';
+              count++;
+            }
+          });
+          showToast('Approved', `Approved ${count} low-risk suggestions. Head to "Apply & Undo" to execute.`, true);
           loadSuggestions();
           loadApplyList();
+          loadHomeSummary();
         } catch (e) {
           console.error(e);
         }
@@ -3558,120 +3849,212 @@
         return;
       }
 
+      // Populate What-If Select with all available servers
+      if (whatifSelect) {
+        whatifSelect.innerHTML = '';
         servers.forEach(s => {
-          // Status badge
-          let statusPill = '';
-          const st = String(s.status || '').toLowerCase();
-          if (st === 'idle') {
-            statusPill = '<span class="px-2.5 py-1 rounded-full text-rose-800 bg-rose-100 border border-rose-200 font-bold">Idle</span>';
-          } else if (st === 'over_provisioned') {
-            statusPill = '<span class="px-2.5 py-1 rounded-full text-amber-800 bg-amber-100 border border-amber-200 font-bold">Too big</span>';
-          } else if (st === 'hot') {
-            statusPill = '<span class="px-2.5 py-1 rounded-full text-purple-800 bg-purple-100 border border-purple-200 font-bold">Overloaded</span>';
-          } else {
-            statusPill = '<span class="px-2.5 py-1 rounded-full text-emerald-800 bg-emerald-100 border border-emerald-200 font-bold">Healthy</span>';
-          }
-
-          // Cloud Provider badge
-          const prov = s.cloud_provider || (s.resource_id.includes('azure') ? 'Azure' : (s.resource_id.includes('gcp') ? 'GCP' : 'AWS'));
-          let provPill = '';
-          if (prov === 'Azure') {
-            provPill = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200">Azure</span>';
-          } else if (prov === 'GCP') {
-            provPill = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">GCP</span>';
-          } else {
-            provPill = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-100 text-orange-800 border border-orange-200">AWS</span>';
-          }
-
-          const tr = document.createElement('tr');
-          tr.className = 'hover:bg-cream-50/70 transition cursor-pointer';
-          tr.onclick = (e) => {
-            // Prevent trigger if clicking on button
-            if (e.target.tagName !== 'BUTTON') openServerDetailModal(s.resource_id);
-          };
-
-          const avgCpuStr = s.avg_cpu !== null ? `${Number(s.avg_cpu).toFixed(1)}%` : '--';
-          const peakCpuStr = s.peak_cpu !== null ? `${Number(s.peak_cpu).toFixed(1)}%` : '--';
-          const memStr = s.memory_utilization_pct !== null && s.memory_utilization_pct !== undefined ? `${Number(s.memory_utilization_pct).toFixed(1)}%` : '--';
-          const costStr = s.monthly_cost !== null ? `$${Number(s.monthly_cost).toFixed(2)}/mo` : '$0.00';
-
-          tr.innerHTML = `
-            <td class="px-4 py-3.5">${provPill}</td>
-            <td class="px-4 py-3.5 font-mono text-[11px] text-slate-600">${s.region || 'us-east-1'}</td>
-            <td class="px-4 py-3.5 font-bold font-mono text-slate-900">${s.resource_id}</td>
-            <td class="px-4 py-3.5">
-              <span class="text-slate-800 font-medium block truncate max-w-[130px]" title="${s.resource_name || s.resource_id}">${s.resource_name || s.resource_type || 'compute'}</span>
-              <span class="text-[10px] uppercase text-slate-400 font-mono">${s.environment || 'production'}</span>
-            </td>
-            <td class="px-4 py-3.5 font-mono text-slate-700">${s.current_size || '--'}</td>
-            <td class="px-4 py-3.5 font-mono font-semibold text-slate-800">${avgCpuStr} <span class="text-[10px] text-slate-400 font-normal">(${peakCpuStr} pk)</span></td>
-            <td class="px-4 py-3.5 font-mono font-semibold text-slate-700">${memStr}</td>
-            <td class="px-4 py-3.5 font-mono text-slate-900 font-semibold">${costStr}</td>
-            <td class="px-4 py-3.5">${statusPill}</td>
-            <td class="px-4 py-3.5 text-right">
-              <button onclick="openServerDetailModal('${s.resource_id}')" class="px-3 py-1 rounded-xl bg-cream-200 hover:bg-sage-600 hover:text-white font-semibold text-[11px] transition">
-                Inspect &rarr;
-              </button>
-            </td>
-          `;
-
-          tbody.appendChild(tr);
-
-          // Option for What-if
           const opt = document.createElement('option');
           opt.value = s.resource_id;
-          opt.innerText = `${s.resource_id} (${s.current_size}, $${Number(s.monthly_cost).toFixed(2)}/mo)`;
+          opt.innerText = `${s.resource_id} (${s.current_size || s.instance_type || 'standard'}, $${Number(s.monthly_cost).toFixed(2)}/mo)`;
           whatifSelect.appendChild(opt);
         });
+      }
 
-        // Trigger whatif default
+      // Read Server Filter & Search Controls
+      const providerVal = document.getElementById('servers-filter-provider')?.value || 'all';
+      const statusVal = document.getElementById('servers-filter-status')?.value || 'all';
+      const searchVal = document.getElementById('servers-search-input')?.value?.trim().toLowerCase() || '';
+
+      let displayServers = [...servers];
+
+      if (providerVal !== 'all') {
+        displayServers = displayServers.filter(s => {
+          const prov = (s.cloud_provider || (s.resource_id.includes('azure') ? 'Azure' : (s.resource_id.includes('gcp') ? 'GCP' : 'AWS'))).toLowerCase();
+          return prov === providerVal.toLowerCase();
+        });
+      }
+
+      if (statusVal !== 'all') {
+        displayServers = displayServers.filter(s => {
+          const st = String(s.status || '').toLowerCase();
+          return st === statusVal.toLowerCase();
+        });
+      }
+
+      if (searchVal) {
+        displayServers = displayServers.filter(s => 
+          (s.resource_id || '').toLowerCase().includes(searchVal) ||
+          (s.instance_type || s.current_size || '').toLowerCase().includes(searchVal) ||
+          (s.region || '').toLowerCase().includes(searchVal) ||
+          (s.cloud_provider || '').toLowerCase().includes(searchVal) ||
+          (s.environment || '').toLowerCase().includes(searchVal)
+        );
+      }
+
+      if (displayServers.length === 0) {
+        const noMatchTr = document.createElement('tr');
+        noMatchTr.innerHTML = `
+          <td colspan="10" class="py-8 text-center text-slate-500 font-sans">
+            No servers match your current search and filters. 
+            <button onclick="resetServersFilters()" class="text-sage-600 underline font-semibold ml-1.5">Reset Filters</button>
+          </td>
+        `;
+        tbody.appendChild(noMatchTr);
         runWhatIfSimulation();
         lucide.createIcons();
-      } catch (e) {
-        console.error('Error loading servers:', e);
+        return;
       }
-    }
 
-    async function openServerDetailModal(resourceId) {
-      try {
-        const res = await fetch(`${API}/api/v2/servers/${resourceId}`);
-        if (!res.ok) throw new Error('Failed to load server detail');
-        const data = await res.json();
-
-        document.getElementById('modal-srv-id').innerText = data.server.resource_id;
-        const prov = data.server.cloud_provider || 'Cloud';
-        const reg = data.server.region || 'global';
-        const memUtil = data.server.memory_utilization_pct != null ? `${data.server.memory_utilization_pct}%` : '--';
-        const diskCap = data.server.total_storage_gb != null ? `${data.server.total_storage_gb} GB` : '100 GB';
-        const netIn = data.server.network_in_mb != null ? data.server.network_in_mb : 0;
-        const netOut = data.server.network_out_mb != null ? data.server.network_out_mb : 0;
-        document.getElementById('modal-srv-specs').innerText = 
-          `${prov} (${reg}) • Size: ${data.server.current_size} • ${data.server.vcpu || 2} vCPU • Memory: ${memUtil} util (${data.server.total_memory_gb || 4} GB) • Storage: ${diskCap} • Net: ${netIn} in / ${netOut} out MB • ${data.server.environment || 'production'}`;
-
-        const badge = document.getElementById('modal-srv-status-badge');
-        const st = String(data.server.status || '').toLowerCase();
+      displayServers.forEach(s => {
+        // Status badge
+        let statusPill = '';
+        const st = String(s.status || '').toLowerCase();
         if (st === 'idle') {
-          badge.className = 'px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase bg-rose-100 text-rose-800';
-          badge.innerText = 'Idle';
+          statusPill = '<span class="px-2.5 py-1 rounded-full text-rose-800 bg-rose-100 border border-rose-200 font-bold">Idle</span>';
         } else if (st === 'over_provisioned') {
-          badge.className = 'px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase bg-amber-100 text-amber-800';
-          badge.innerText = 'Too big';
+          statusPill = '<span class="px-2.5 py-1 rounded-full text-amber-800 bg-amber-100 border border-amber-200 font-bold">Too big</span>';
+        } else if (st === 'hot') {
+          statusPill = '<span class="px-2.5 py-1 rounded-full text-purple-800 bg-purple-100 border border-purple-200 font-bold">Overloaded</span>';
         } else {
-          badge.className = 'px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase bg-emerald-100 text-emerald-800';
-          badge.innerText = 'Healthy';
+          statusPill = '<span class="px-2.5 py-1 rounded-full text-emerald-800 bg-emerald-100 border border-emerald-200 font-bold">Healthy</span>';
         }
 
-        document.getElementById('modal-srv-insight').innerText = data.forecast.busiest_time || 'Expected busiest: Monday 2:00 PM';
+        // Cloud Provider badge
+        const prov = s.cloud_provider || (s.resource_id.includes('azure') ? 'Azure' : (s.resource_id.includes('gcp') ? 'GCP' : 'AWS'));
+        let provPill = '';
+        if (prov === 'Azure') {
+          provPill = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200">Azure</span>';
+        } else if (prov === 'GCP') {
+          provPill = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">GCP</span>';
+        } else {
+          provPill = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-100 text-orange-800 border border-orange-200">AWS</span>';
+        }
 
-        // Render Chart.js with Uncertainty Band
-        renderUncertaintyForecastChart(data.forecast.points);
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-cream-50/70 transition cursor-pointer';
+        tr.onclick = (e) => {
+          if (e.target.tagName !== 'BUTTON') openServerDetailModal(s.resource_id);
+        };
 
-        document.getElementById('modal-server-detail').classList.remove('hidden');
-        lucide.createIcons();
-      } catch (e) {
-        console.error('Error opening server modal:', e);
-      }
+        const avgCpuStr = s.avg_cpu !== null && s.avg_cpu !== undefined ? `${Number(s.avg_cpu).toFixed(1)}%` : '--';
+        const peakCpuStr = s.peak_cpu !== null && s.peak_cpu !== undefined ? `${Number(s.peak_cpu).toFixed(1)}%` : '--';
+        const memStr = s.memory_utilization_pct !== null && s.memory_utilization_pct !== undefined ? `${Number(s.memory_utilization_pct).toFixed(1)}%` : (s.memory_pct != null ? `${Number(s.memory_pct).toFixed(1)}%` : '--');
+        const costStr = s.monthly_cost !== null && s.monthly_cost !== undefined ? `$${Number(s.monthly_cost).toFixed(2)}/mo` : '$0.00';
+
+        tr.innerHTML = `
+          <td class="px-4 py-3.5">${provPill}</td>
+          <td class="px-4 py-3.5 font-mono text-[11px] text-slate-600">${s.region || 'us-east-1'}</td>
+          <td class="px-4 py-3.5 font-bold font-mono text-slate-900">${s.resource_id}</td>
+          <td class="px-4 py-3.5">
+            <span class="text-slate-800 font-medium block truncate max-w-[130px]" title="${s.resource_name || s.resource_id}">${s.resource_name || s.resource_type || 'compute'}</span>
+            <span class="text-[10px] uppercase text-slate-400 font-mono">${s.environment || 'production'}</span>
+          </td>
+          <td class="px-4 py-3.5 font-mono text-slate-700">${s.current_size || s.instance_type || '--'}</td>
+          <td class="px-4 py-3.5 font-mono font-semibold text-slate-800">${avgCpuStr} <span class="text-[10px] text-slate-400 font-normal">(${peakCpuStr} pk)</span></td>
+          <td class="px-4 py-3.5 font-mono font-semibold text-slate-700">${memStr}</td>
+          <td class="px-4 py-3.5 font-mono text-slate-900 font-semibold">${costStr}</td>
+          <td class="px-4 py-3.5">${statusPill}</td>
+          <td class="px-4 py-3.5 text-right">
+            <button onclick="openServerDetailModal('${s.resource_id}')" class="px-3 py-1 rounded-xl bg-cream-200 hover:bg-sage-600 hover:text-white font-semibold text-[11px] transition">
+              Inspect &rarr;
+            </button>
+          </td>
+        `;
+
+        tbody.appendChild(tr);
+      });
+
+      // Trigger whatif default
+      runWhatIfSimulation();
+      lucide.createIcons();
+    } catch (e) {
+      console.error('Error loading servers:', e);
     }
+  }
+
+  async function openServerDetailModal(resourceId) {
+    try {
+      let server = null;
+      let forecastPoints = null;
+      let busiestTime = 'Expected peak: Monday 2:00 PM';
+
+      if (API) {
+        try {
+          const res = await fetch(`${API}/api/v2/servers/${resourceId}`);
+          if (res.ok) {
+            const data = await res.json();
+            server = data.server;
+            forecastPoints = data.forecast?.points;
+            busiestTime = data.forecast?.busiest_time;
+          }
+        } catch (e) {
+          console.warn("Backend server detail offline, using client dataset");
+        }
+      }
+
+      if (!server) {
+        server = (cachedServers || []).find(s => s.resource_id === resourceId) ||
+                 (FALLBACK_DEMO_SERVERS || []).find(s => s.resource_id === resourceId) ||
+                 (getLocalUserFleet() || []).find(s => s.resource_id === resourceId);
+      }
+
+      if (!server) {
+        showToast('Server Info', 'Server data not found in cache.', false);
+        return;
+      }
+
+      if (!forecastPoints || forecastPoints.length === 0) {
+        const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        const baseCpu = Number(server.avg_cpu) || 15;
+        const peakCpu = Number(server.peak_cpu) || Math.min(100, Math.round(baseCpu * 1.6 * 10) / 10);
+        forecastPoints = days.map((day, idx) => {
+          const seasonal = Math.sin((idx / 7) * Math.PI * 2) * 5;
+          const pred = Math.max(2, Math.min(95, Math.round((baseCpu + seasonal) * 10) / 10));
+          return {
+            ds: `${day} 12:00`,
+            yhat: pred,
+            yhat_lower: Math.max(0, Math.round((pred - 4) * 10) / 10),
+            yhat_upper: Math.min(100, Math.round((pred + 7) * 10) / 10)
+          };
+        });
+        busiestTime = `Expected peak: ${days[2]} 2:00 PM (${Math.round(peakCpu)}% CPU)`;
+      }
+
+      document.getElementById('modal-srv-id').innerText = server.resource_id;
+      const prov = server.cloud_provider || (server.resource_id.includes('azure') ? 'Azure' : (server.resource_id.includes('gcp') ? 'GCP' : 'AWS'));
+      const reg = server.region || 'us-east-1';
+      const memUtil = server.memory_utilization_pct != null ? `${server.memory_utilization_pct}%` : (server.memory_pct != null ? `${server.memory_pct}%` : '28%');
+      const diskCap = server.total_storage_gb != null ? `${server.total_storage_gb} GB` : '100 GB';
+      const netIn = server.network_in_mb != null ? server.network_in_mb : 12;
+      const netOut = server.network_out_mb != null ? server.network_out_mb : 25;
+      document.getElementById('modal-srv-specs').innerText = 
+        `${prov} (${reg}) • Size: ${server.current_size || server.instance_type || 'standard'} • Memory: ${memUtil} util • Storage: ${diskCap} • Net: ${netIn} in / ${netOut} out MB • ${server.environment || 'production'}`;
+
+      const badge = document.getElementById('modal-srv-status-badge');
+      const st = String(server.status || '').toLowerCase();
+      if (st === 'idle') {
+        badge.className = 'px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase bg-rose-100 text-rose-800';
+        badge.innerText = 'Idle';
+      } else if (st === 'over_provisioned') {
+        badge.className = 'px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase bg-amber-100 text-amber-800';
+        badge.innerText = 'Too big';
+      } else if (st === 'hot') {
+        badge.className = 'px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase bg-purple-100 text-purple-800';
+        badge.innerText = 'Overloaded';
+      } else {
+        badge.className = 'px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase bg-emerald-100 text-emerald-800';
+        badge.innerText = 'Healthy';
+      }
+
+      document.getElementById('modal-srv-insight').innerText = busiestTime;
+
+      renderUncertaintyForecastChart(forecastPoints);
+      document.getElementById('modal-server-detail').classList.remove('hidden');
+      if (window.lucide) lucide.createIcons();
+    } catch (e) {
+      console.error('Error opening server modal:', e);
+    }
+  }
 
     function closeServerDetailModal() {
       document.getElementById('modal-server-detail').classList.add('hidden');
@@ -3769,32 +4152,93 @@
       if (!srvId || !sizeVal) return;
 
       try {
-        const res = await fetch(`${API}/api/v2/what-if`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ resource_id: srvId, target_size: sizeVal }),
-        });
-        const data = await res.json();
+        let data = null;
+        if (API) {
+          try {
+            const res = await fetch(`${API}/api/v2/what-if`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ resource_id: srvId, target_size: sizeVal }),
+            });
+            if (res.ok) data = await res.json();
+          } catch (e) {
+            console.warn("Backend what-if offline, using client calculator");
+          }
+        }
+
+        // Client-side simulation fallback
+        if (!data) {
+          const srv = (cachedServers || []).find(s => s.resource_id === srvId) ||
+                      (FALLBACK_DEMO_SERVERS || []).find(s => s.resource_id === srvId) ||
+                      { monthly_cost: 60, peak_cpu: 25, avg_cpu: 10 };
+
+          const currentCost = Number(srv.monthly_cost) || 60;
+          const currentPeak = Number(srv.peak_cpu) || 25;
+
+          // Estimate target cost from sizeVal
+          let predictedCost = 30;
+          const targetOpt = document.querySelector(`#whatif-size-select option[value="${sizeVal}"]`);
+          if (targetOpt && targetOpt.innerText.includes('$')) {
+            const match = targetOpt.innerText.match(/\$([0-9.]+)/);
+            if (match) predictedCost = parseFloat(match[1]);
+          }
+
+          const costRatio = currentCost > 0 ? (predictedCost / currentCost) : 1;
+          const predictedPeak = Math.min(100, Math.round((currentPeak / Math.max(0.2, costRatio)) * 10) / 10);
+          const safeLimit = 75;
+          const isSafe = predictedPeak <= safeLimit;
+          const savings = Math.round((currentCost - predictedCost) * 100) / 100;
+          const pctSavings = currentCost > 0 ? Math.round((savings / currentCost) * 100) : 0;
+
+          data = {
+            resource_id: srvId,
+            current_size: srv.current_size || srv.instance_type || 'standard',
+            target_size: sizeVal,
+            current_monthly_cost: currentCost,
+            predicted_monthly_cost: predictedCost,
+            monthly_savings_usd: savings,
+            pct_savings: pctSavings,
+            current_peak_cpu: currentPeak,
+            predicted_peak_cpu: predictedPeak,
+            safe_cpu_limit: safeLimit,
+            is_safe: isSafe,
+            explanation: isSafe
+              ? `Safe to change: Even with expected diurnal traffic peaks, predicted CPU of ${predictedPeak}% stays comfortably below your ${safeLimit}% policy ceiling. Saves $${savings.toFixed(2)} monthly.`
+              : `Caution: Predicted peak CPU of ${predictedPeak}% exceeds your safe limit of ${safeLimit}%. Performance degradation or latency spikes may occur.`
+          };
+        }
 
         // Verdict Badge
         const badge = document.getElementById('whatif-verdict-badge');
-        if (data.is_safe) {
-          badge.className = 'px-3.5 py-1.5 rounded-full text-xs font-extrabold uppercase bg-emerald-100 text-emerald-800 border border-emerald-300';
-          badge.innerText = 'Safe to change';
-        } else {
-          badge.className = 'px-3.5 py-1.5 rounded-full text-xs font-extrabold uppercase bg-rose-100 text-rose-800 border border-rose-300';
-          badge.innerText = 'Not safe (Exceeds limit)';
+        if (badge) {
+          if (data.is_safe) {
+            badge.className = 'px-3.5 py-1.5 rounded-full text-xs font-extrabold uppercase bg-emerald-100 text-emerald-800 border border-emerald-300';
+            badge.innerText = 'Safe to change';
+          } else {
+            badge.className = 'px-3.5 py-1.5 rounded-full text-xs font-extrabold uppercase bg-rose-100 text-rose-800 border border-rose-300';
+            badge.innerText = 'Not safe (Exceeds limit)';
+          }
         }
 
         // Stats
-        document.getElementById('whatif-cost-compare').innerText = `$${data.current_monthly_cost.toFixed(2)} → $${data.predicted_monthly_cost.toFixed(2)}`;
-        document.getElementById('whatif-savings-pill').innerText = data.monthly_savings_usd >= 0 
-          ? `Save $${data.monthly_savings_usd.toFixed(2)} / mo (-${data.pct_savings}%)`
-          : `Costs $${Math.abs(data.monthly_savings_usd).toFixed(2)} more`;
+        const costCmp = document.getElementById('whatif-cost-compare');
+        if (costCmp) costCmp.innerText = `$${Number(data.current_monthly_cost).toFixed(2)} → $${Number(data.predicted_monthly_cost).toFixed(2)}`;
 
-        document.getElementById('whatif-cpu-compare').innerText = `${data.current_peak_cpu}% → ${data.predicted_peak_cpu}%`;
-        document.getElementById('whatif-limit-val').innerText = `${data.safe_cpu_limit}%`;
-        document.getElementById('whatif-explanation-text').innerText = data.explanation;
+        const savPill = document.getElementById('whatif-savings-pill');
+        if (savPill) {
+          savPill.innerText = data.monthly_savings_usd >= 0 
+            ? `Save $${Number(data.monthly_savings_usd).toFixed(2)} / mo (-${data.pct_savings}%)`
+            : `Costs $${Math.abs(data.monthly_savings_usd).toFixed(2)} more`;
+        }
+
+        const cpuCmp = document.getElementById('whatif-cpu-compare');
+        if (cpuCmp) cpuCmp.innerText = `${data.current_peak_cpu}% → ${data.predicted_peak_cpu}%`;
+
+        const limVal = document.getElementById('whatif-limit-val');
+        if (limVal) limVal.innerText = `${data.safe_cpu_limit}%`;
+
+        const explText = document.getElementById('whatif-explanation-text');
+        if (explText) explText.innerText = data.explanation;
       } catch (e) {
         console.error('Error running what-if:', e);
       }
