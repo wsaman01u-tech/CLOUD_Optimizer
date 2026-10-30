@@ -172,6 +172,71 @@ class SimulateStepRequest(BaseModel):
     price_per_server: float = Field(default=1.0, gt=0.0)
 
 
+class LoginRequest(BaseModel):
+    email: str = Field(...)
+    password: str = Field(...)
+
+
+class RegisterRequest(BaseModel):
+    name: str = Field(...)
+    email: str = Field(...)
+    password: str = Field(..., min_length=6)
+    role: Optional[str] = Field(default="Cloud Architect")
+
+
+@app.post("/api/auth/login")
+def login(creds: LoginRequest) -> Dict[str, Any]:
+    """Authenticate a cloud administrator or engineer."""
+    email_clean = creds.email.strip().lower()
+    if not creds.password or len(creds.password) < 3:
+        raise HTTPException(status_code=400, detail="Invalid password provided.")
+
+    # Determine user role from email or default to Cloud Infrastructure Engineer
+    name = "Cloud Administrator" if "admin" in email_clean else email_clean.split("@")[0].replace(".", " ").title()
+    role = "Lead Cloud Architect" if "admin" in email_clean else "DevOps & FinOps Specialist"
+
+    return {
+        "status": "success",
+        "token": f"opt_session_{abs(hash(email_clean)) % 1000000:06d}",
+        "user": {
+            "name": name,
+            "email": email_clean,
+            "role": role,
+            "organization": "Enterprise Cloud Operations",
+            "access_tier": "Full Autonomous Controller",
+        }
+    }
+
+
+@app.post("/api/auth/register")
+def register(user_data: RegisterRequest) -> Dict[str, Any]:
+    """Register a new user account."""
+    return {
+        "status": "success",
+        "token": f"opt_session_{abs(hash(user_data.email)) % 1000000:06d}",
+        "user": {
+            "name": user_data.name.strip(),
+            "email": user_data.email.strip().lower(),
+            "role": user_data.role or "DevOps Engineer",
+            "organization": "Enterprise Cloud Operations",
+            "access_tier": "Standard Operator",
+        }
+    }
+
+
+@app.get("/api/auth/me")
+def get_current_user() -> Dict[str, Any]:
+    """Return active profile information."""
+    return {
+        "user": {
+            "name": "Cloud Operations Lead",
+            "email": "admin@cloudopt.ai",
+            "role": "Autonomous Optimizer Administrator",
+            "status": "ACTIVE",
+        }
+    }
+
+
 @app.post("/api/simulate-step")
 def simulate_single_step(req: SimulateStepRequest) -> Dict[str, Any]:
     """Interactive endpoint: compute real-time scaling action, safety checks, and explanation."""
@@ -231,3 +296,4 @@ def simulate_single_step(req: SimulateStepRequest) -> Dict[str, Any]:
 # Mount frontend static directory if present
 if os.path.exists("frontend"):
     app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
+

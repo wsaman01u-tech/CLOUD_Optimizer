@@ -110,3 +110,4 @@ class AuditAgent:
                 writer.writeheader()
                 for row in self.decisions:
                     writer.writerow(row)
+

@@ -187,3 +187,21 @@ def test_fastapi_simulate_step_endpoint():
     assert "servers_after" in data
     assert "explanation" in data
     assert "kubectl_command" in data
+
+
+def test_fastapi_auth_login_and_me():
+    """Verify login and me endpoints."""
+    client = TestClient(app)
+    # Login
+    res = client.post("/api/auth/login", json={"email": "admin@cloudopt.ai", "password": "demo123"})
+    assert res.status_code == 200
+    data = res.json()
+    assert data["status"] == "success"
+    assert "token" in data
+    assert "user" in data
+
+    # Me
+    res_me = client.get("/api/auth/me")
+    assert res_me.status_code == 200
+    assert "user" in res_me.json()
+

@@ -1,691 +1,1339 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Autonomous Cloud Cost & Performance Optimizer</title>
+  <title>Autonomous Cloud Cost &amp; Performance Optimizer</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
-      darkMode: 'class',
       theme: {
         extend: {
           colors: {
-            brand: {
-              50: '#eef2ff',
-              500: '#6366f1',
-              600: '#4f46e5',
-              700: '#4338ca',
+            // Warm beige and cream theme
+            cream: {
+              50: '#fdfcf9',
+              100: '#fbf9f5',
+              200: '#f5f0e6',
+              300: '#ece4d5',
+              400: '#dfd4c0',
+              500: '#cec0a8',
             },
-            dark: {
-              800: '#1e293b',
-              900: '#0f172a',
-              950: '#020617',
+            // Light green / Sage / Emerald accents
+            sage: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              200: '#bbf7d0',
+              300: '#86efac',
+              400: '#4ade80',
+              500: '#22c55e',
+              600: '#16a34a',
+              700: '#15803d',
+              800: '#166534',
+              900: '#14532d',
+            },
+            forest: {
+              900: '#0f241d',
+              950: '#081712',
             }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
           }
         }
       }
     }
   </script>
+
+  <!-- Google Fonts Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
   <!-- Chart.js 4 -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
+
   <style>
-    /* Custom scrollbars */
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #fbf9f5;
+      color: #1e293b;
+    }
+    code, pre {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    /* Subtle custom scrollbar */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #0f172a; }
-    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    ::-webkit-scrollbar-track { background: #f5f0e6; }
+    ::-webkit-scrollbar-thumb { background: #d7cdbd; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #beaf9b; }
+
+    .glow-sage {
+      box-shadow: 0 4px 20px -2px rgba(16, 185, 129, 0.15);
+    }
+    .card-beige {
+      background: #ffffff;
+      border: 1px solid #ede7db;
+      box-shadow: 0 2px 8px -2px rgba(45, 55, 72, 0.04);
+    }
+    .card-beige:hover {
+      border-color: #dcd3c3;
+    }
   </style>
 </head>
-<body class="bg-dark-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-indigo-500 selection:text-white">
+<body class="min-h-screen flex flex-col antialiased selection:bg-sage-200 selection:text-sage-900">
 
-  <!-- Top Navigation Header -->
-  <header class="border-b border-slate-800 bg-dark-900/90 backdrop-blur sticky top-0 z-50 px-4 lg:px-8 py-3.5">
-    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
-      <div class="flex items-center gap-3">
-        <div class="p-2 bg-indigo-600/20 text-indigo-400 rounded-lg border border-indigo-500/30">
-          <i data-lucide="cloud-lightning" class="w-6 h-6"></i>
+  <!-- TOP GLOBAL HEADER -->
+  <header class="bg-cream-100/90 backdrop-blur-md border-b border-cream-300/80 sticky top-0 z-50 px-4 lg:px-8 py-3 transition-all">
+    <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+      
+      <!-- Brand Logo & Title -->
+      <a href="javascript:void(0)" onclick="navigateTo('landing')" class="flex items-center gap-3 group">
+        <div class="w-10 h-10 rounded-xl bg-sage-100 border border-sage-300 flex items-center justify-center text-sage-700 shadow-sm group-hover:scale-105 transition-transform">
+          <svg class="w-6 h-6" viewBox="0 0 64 64" fill="none">
+            <path d="M46 38H18a10 10 0 0 1-1.3-19.9 14 14 0 0 1 27.6-3.8A10 10 0 0 1 46 38z" fill="#10b981" />
+            <path d="M32 21c-4.5 0-8 3.5-8 8 0 5 6 9 8 10.5 2-1.5 8-5.5 8-10.5 0-4.5-3.5-8-8-8z" fill="#f0fdf4" />
+            <path d="M32 23c-3.2 0-6 2.7-6 6 0 3.8 4.2 6.8 6 8 1.8-1.2 6-4.2 6-8 0-3.3-2.8-6-6-6z" fill="#059669" />
+            <path d="M33 26l-3 4h2.5l-1.2 4.5 3.8-5h-2.6l0.5-3.5z" fill="#fef08a" />
+          </svg>
         </div>
         <div>
-          <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
-            Autonomous Cloud Cost Optimizer
-            <span class="text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Production Ready
+          <div class="flex items-center gap-2">
+            <span class="font-extrabold text-slate-900 tracking-tight text-base">Cloud<span class="text-sage-600">Optimizer</span></span>
+            <span class="text-[10px] font-semibold tracking-wide uppercase px-2 py-0.5 rounded-full bg-sage-100 text-sage-800 border border-sage-200">
+              Autonomous AI
             </span>
-          </h1>
-          <p class="text-xs text-slate-400">Multi-Agent RL Autoscaling & Rightsizing Engine</p>
+          </div>
+          <p class="text-[11px] text-slate-500 font-medium">Team XOXO (T-09) &bull; Closed-Loop RL</p>
         </div>
-      </div>
+      </a>
 
-      <!-- Navigation Tabs -->
-      <nav class="flex items-center space-x-1 bg-slate-900/80 p-1 rounded-xl border border-slate-800 text-sm overflow-x-auto">
-        <button onclick="switchTab('overview')" id="tab-overview" class="tab-btn px-3.5 py-1.5 rounded-lg font-medium transition-all text-white bg-indigo-600 shadow-sm flex items-center gap-1.5">
-          <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Overview
+      <!-- LANDING NAV (Visible when on landing) -->
+      <nav id="landing-nav" class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600">
+        <a href="#features" class="hover:text-sage-700 transition">Features</a>
+        <a href="#agents" class="hover:text-sage-700 transition">5 Agents</a>
+        <a href="#benchmarks" class="hover:text-sage-700 transition">Benchmarks</a>
+      </nav>
+
+      <!-- CONSOLE TABS NAV (Visible when inside Console/Dashboard) -->
+      <nav id="console-tabs-nav" class="hidden items-center bg-cream-200/80 p-1 rounded-xl border border-cream-300 text-xs font-semibold overflow-x-auto">
+        <button onclick="switchTab('overview')" id="tab-overview" class="tab-btn px-3 py-1.5 rounded-lg transition-all text-white bg-sage-600 shadow-sm flex items-center gap-1.5">
+          <i data-lucide="layout-dashboard" class="w-3.5 h-3.5"></i> Overview
         </button>
-        <button onclick="switchTab('usage')" id="tab-usage" class="tab-btn px-3.5 py-1.5 rounded-lg font-medium transition-all text-slate-400 hover:text-white flex items-center gap-1.5">
-          <i data-lucide="server" class="w-4 h-4"></i> Fleet Usage
+        <button onclick="switchTab('usage')" id="tab-usage" class="tab-btn px-3 py-1.5 rounded-lg transition-all text-slate-600 hover:text-slate-900 flex items-center gap-1.5">
+          <i data-lucide="server" class="w-3.5 h-3.5"></i> Fleet Usage
         </button>
-        <button onclick="switchTab('forecast')" id="tab-forecast" class="tab-btn px-3.5 py-1.5 rounded-lg font-medium transition-all text-slate-400 hover:text-white flex items-center gap-1.5">
-          <i data-lucide="trending-up" class="w-4 h-4"></i> Forecast
+        <button onclick="switchTab('forecast')" id="tab-forecast" class="tab-btn px-3 py-1.5 rounded-lg transition-all text-slate-600 hover:text-slate-900 flex items-center gap-1.5">
+          <i data-lucide="trending-up" class="w-3.5 h-3.5"></i> Forecast
         </button>
-        <button onclick="switchTab('decisions')" id="tab-decisions" class="tab-btn px-3.5 py-1.5 rounded-lg font-medium transition-all text-slate-400 hover:text-white flex items-center gap-1.5">
-          <i data-lucide="cpu" class="w-4 h-4"></i> Decisions & Audit
+        <button onclick="switchTab('decisions')" id="tab-decisions" class="tab-btn px-3 py-1.5 rounded-lg transition-all text-slate-600 hover:text-slate-900 flex items-center gap-1.5">
+          <i data-lucide="cpu" class="w-3.5 h-3.5"></i> Decisions
         </button>
-        <button onclick="switchTab('evaluation')" id="tab-evaluation" class="tab-btn px-3.5 py-1.5 rounded-lg font-medium transition-all text-slate-400 hover:text-white flex items-center gap-1.5">
-          <i data-lucide="bar-chart-2" class="w-4 h-4"></i> Evaluation
+        <button onclick="switchTab('evaluation')" id="tab-evaluation" class="tab-btn px-3 py-1.5 rounded-lg transition-all text-slate-600 hover:text-slate-900 flex items-center gap-1.5">
+          <i data-lucide="bar-chart-2" class="w-3.5 h-3.5"></i> Benchmark
         </button>
-        <button onclick="switchTab('deployment')" id="tab-deployment" class="tab-btn px-3.5 py-1.5 rounded-lg font-medium transition-all text-slate-400 hover:text-white flex items-center gap-1.5">
-          <i data-lucide="terminal" class="w-4 h-4"></i> IaC Deploy
+        <button onclick="switchTab('deployment')" id="tab-deployment" class="tab-btn px-3 py-1.5 rounded-lg transition-all text-slate-600 hover:text-slate-900 flex items-center gap-1.5">
+          <i data-lucide="terminal" class="w-3.5 h-3.5"></i> IaC Deploy
         </button>
-        <button onclick="switchTab('simulator')" id="tab-simulator" class="tab-btn px-3.5 py-1.5 rounded-lg font-medium transition-all text-amber-400 hover:text-amber-300 flex items-center gap-1.5">
-          <i data-lucide="play" class="w-4 h-4"></i> Live Test
+        <button onclick="switchTab('simulator')" id="tab-simulator" class="tab-btn px-3 py-1.5 rounded-lg transition-all text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200/80 flex items-center gap-1.5">
+          <i data-lucide="play" class="w-3.5 h-3.5 text-amber-600"></i> Simulator
         </button>
       </nav>
 
-      <!-- Status Indicator & Reload Button -->
-      <div class="flex items-center gap-2">
-        <button onclick="loadAllData()" title="Reload data" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition">
-          <i data-lucide="refresh-cw" class="w-4 h-4" id="refresh-icon"></i>
-        </button>
-      </div>
-    </div>
-  </header>
-
-  <!-- Notification Banner for Free Hosting Sleep -->
-  <div id="hosting-notice" class="bg-indigo-950/60 border-b border-indigo-900/50 px-4 py-2 text-xs text-indigo-300 flex items-center justify-center gap-2">
-    <i data-lucide="info" class="w-4 h-4 text-indigo-400"></i>
-    <span>Autonomous agents synchronize in real time. If accessing over public hosting, server spin-up may take up to 60 seconds on initial wake.</span>
-  </div>
-
-  <!-- Loading State Banner -->
-  <div id="loading-spinner" class="hidden max-w-7xl mx-auto w-full px-4 pt-4">
-    <div class="bg-indigo-950/40 border border-indigo-800/50 rounded-xl p-4 text-center text-sm text-indigo-300 flex items-center justify-center gap-3">
-      <div class="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-      <span>Querying agent endpoints and loading saved telemetry...</span>
-    </div>
-  </div>
-
-  <!-- Main Content Container -->
-  <main class="max-w-7xl mx-auto w-full px-4 lg:px-8 py-6 flex-1">
-
-    <!-- TAB 1: OVERVIEW -->
-    <section id="view-overview" class="tab-view space-y-6">
-      <!-- KPI Row -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <!-- Card 1 -->
-        <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5 hover:border-slate-700 transition relative overflow-hidden">
-          <div class="flex justify-between items-start">
-            <div>
-              <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Cloud Cost Reduction</p>
-              <h3 id="kpi-savings-pct" class="text-3xl font-extrabold text-emerald-400 mt-1">--%</h3>
-              <p id="kpi-cost-saved-usd" class="text-xs text-slate-400 mt-1">Saved $-- vs Static</p>
-            </div>
-            <div class="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/20">
-              <i data-lucide="wallet" class="w-5 h-5"></i>
-            </div>
-          </div>
-          <div class="mt-3 w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
-            <div id="kpi-savings-bar" class="bg-emerald-500 h-full rounded-full" style="width: 0%"></div>
-          </div>
+      <!-- Right Action Controls (Auth, Live Status, Profile) -->
+      <div class="flex items-center gap-3">
+        
+        <!-- Live System Status Pill -->
+        <div class="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-sage-50 border border-sage-200 text-sage-800 text-xs font-semibold">
+          <span class="w-2 h-2 rounded-full bg-sage-500 animate-pulse"></span>
+          <span>Online &bull; 99.01% SLA</span>
         </div>
 
-        <!-- Card 2 -->
-        <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5 hover:border-slate-700 transition relative overflow-hidden">
-          <div class="flex justify-between items-start">
-            <div>
-              <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">SLA Compliance</p>
-              <h3 id="kpi-sla-compliance" class="text-3xl font-extrabold text-indigo-400 mt-1">--%</h3>
-              <p id="kpi-sla-violations" class="text-xs text-slate-400 mt-1">0 Breach Events</p>
-            </div>
-            <div class="p-3 bg-indigo-500/10 text-indigo-400 rounded-xl border border-indigo-500/20">
-              <i data-lucide="shield-check" class="w-5 h-5"></i>
-            </div>
-          </div>
-          <div class="mt-3 w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
-            <div id="kpi-sla-bar" class="bg-indigo-500 h-full rounded-full" style="width: 98%"></div>
-          </div>
-        </div>
-
-        <!-- Card 3 -->
-        <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5 hover:border-slate-700 transition relative overflow-hidden">
-          <div class="flex justify-between items-start">
-            <div>
-              <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Idle Waste Detected</p>
-              <h3 id="kpi-idle-vms" class="text-3xl font-extrabold text-rose-400 mt-1">-- VMs</h3>
-              <p id="kpi-idle-waste-usd" class="text-xs text-slate-400 mt-1">$-- total waste</p>
-            </div>
-            <div class="p-3 bg-rose-500/10 text-rose-400 rounded-xl border border-rose-500/20">
-              <i data-lucide="alert-triangle" class="w-5 h-5"></i>
-            </div>
-          </div>
-          <div class="mt-3 w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
-            <div class="bg-rose-500 h-full rounded-full" style="width: 45%"></div>
-          </div>
-        </div>
-
-        <!-- Card 4 -->
-        <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5 hover:border-slate-700 transition relative overflow-hidden">
-          <div class="flex justify-between items-start">
-            <div>
-              <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Active Scaling Fleet</p>
-              <h3 id="kpi-active-servers" class="text-3xl font-extrabold text-blue-400 mt-1">-- Replicas</h3>
-              <p class="text-xs text-slate-400 mt-1">Capacity: 100 units/server</p>
-            </div>
-            <div class="p-3 bg-blue-500/10 text-blue-400 rounded-xl border border-blue-500/20">
-              <i data-lucide="layers" class="w-5 h-5"></i>
-            </div>
-          </div>
-          <div class="mt-3 w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
-            <div class="bg-blue-500 h-full rounded-full" style="width: 60%"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Charts Row -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Cost Comparison Chart -->
-        <div class="lg:col-span-2 bg-dark-900 border border-slate-800 rounded-2xl p-5">
-          <div class="flex items-center justify-between mb-4">
-            <div>
-              <h4 class="font-bold text-white text-base">Autoscaling Benchmark Comparison</h4>
-              <p class="text-xs text-slate-400">Total Infrastructure Spend ($) Across Scaling Strategies</p>
-            </div>
-            <span class="text-xs px-2.5 py-1 rounded-lg bg-indigo-950 text-indigo-300 border border-indigo-800 font-mono">Test Workload</span>
-          </div>
-          <div class="h-64">
-            <canvas id="overviewCostChart"></canvas>
-          </div>
-        </div>
-
-        <!-- Fleet Efficiency Breakdown -->
-        <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
-          <div>
-            <h4 class="font-bold text-white text-base">Cloud Fleet Classification</h4>
-            <p class="text-xs text-slate-400 mb-4">VM Distribution from Monitoring Agent</p>
-            <div class="h-48 flex items-center justify-center">
-              <canvas id="overviewDonutChart"></canvas>
-            </div>
-          </div>
-          <div class="grid grid-cols-3 gap-2 text-center pt-3 border-t border-slate-800 text-xs">
-            <div>
-              <span class="block text-emerald-400 font-bold text-sm" id="donut-optimal-cnt">--</span>
-              <span class="text-slate-400">Optimal</span>
-            </div>
-            <div>
-              <span class="block text-rose-400 font-bold text-sm" id="donut-idle-cnt">--</span>
-              <span class="text-slate-400">Idle</span>
-            </div>
-            <div>
-              <span class="block text-amber-400 font-bold text-sm" id="donut-overprov-cnt">--</span>
-              <span class="text-slate-400">Overprov.</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- System Architecture & Agent Summary Card -->
-      <div class="bg-dark-900 border border-slate-800 rounded-2xl p-6">
-        <h4 class="font-bold text-white text-base mb-3 flex items-center gap-2">
-          <i data-lucide="network" class="w-5 h-5 text-indigo-400"></i> Autonomous Multi-Agent Operational Architecture
-        </h4>
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-3 text-xs">
-          <div class="p-3.5 bg-slate-950/70 border border-slate-800 rounded-xl space-y-1.5">
-            <div class="flex items-center gap-2 text-indigo-400 font-semibold">
-              <i data-lucide="eye" class="w-4 h-4"></i> 1. Monitoring
-            </div>
-            <p class="text-slate-300">Scans CPU & memory across VMs. Flags idle machines (&lt;10% CPU &gt;90% time) and over-provisioned boxes.</p>
-          </div>
-          <div class="p-3.5 bg-slate-950/70 border border-slate-800 rounded-xl space-y-1.5">
-            <div class="flex items-center gap-2 text-emerald-400 font-semibold">
-              <i data-lucide="line-chart" class="w-4 h-4"></i> 2. Forecaster
-            </div>
-            <p class="text-slate-300">Supervised Random Forest with 24h lag features. Predicts upcoming demand cycles with low RMSE.</p>
-          </div>
-          <div class="p-3.5 bg-slate-950/70 border border-slate-800 rounded-xl space-y-1.5">
-            <div class="flex items-center gap-2 text-amber-400 font-semibold">
-              <i data-lucide="cpu" class="w-4 h-4"></i> 3. Optimizer
-            </div>
-            <p class="text-slate-300">Q-Learning RL agent in state space (load, forecast, servers). Minimizes compute bill while guarding SLA.</p>
-          </div>
-          <div class="p-3.5 bg-slate-950/70 border border-slate-800 rounded-xl space-y-1.5">
-            <div class="flex items-center gap-2 text-blue-400 font-semibold">
-              <i data-lucide="box" class="w-4 h-4"></i> 4. Deployment
-            </div>
-            <p class="text-slate-300">Enforces safety clamping (1-10 replicas, max +/-1 delta). Generates Terraform IaC &amp; kubectl commands.</p>
-          </div>
-          <div class="p-3.5 bg-slate-950/70 border border-slate-800 rounded-xl space-y-1.5">
-            <div class="flex items-center gap-2 text-purple-400 font-semibold">
-              <i data-lucide="file-text" class="w-4 h-4"></i> 5. Audit &amp; Explain
-            </div>
-            <p class="text-slate-300">Creates structured CSV audit logs and readable natural language explanations for enterprise compliance.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- TAB 2: USAGE & MONITORING -->
-    <section id="view-usage" class="tab-view space-y-6 hidden">
-      <div class="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h3 class="text-xl font-bold text-white">Cloud Fleet Usage &amp; Rightsizing Telemetry</h3>
-          <p class="text-xs text-slate-400">Monitoring Agent classification of compute instances</p>
-        </div>
-        <div class="flex items-center gap-2">
-          <input type="text" id="vm-search" oninput="filterVmTable()" placeholder="Search VM ID or Status..." class="bg-dark-900 border border-slate-700 text-xs text-white rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none w-64">
-        </div>
-      </div>
-
-      <!-- CPU Distribution Plot -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5 lg:col-span-2">
-          <h4 class="font-bold text-white text-sm mb-1">Average CPU Utilization Across Fleet</h4>
-          <p class="text-xs text-slate-400 mb-3">Red threshold indicates the 10% idle boundary</p>
-          <div class="h-64">
-            <canvas id="vmCpuHistogram"></canvas>
-          </div>
-        </div>
-
-        <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
-          <div>
-            <h4 class="font-bold text-white text-sm mb-2">Rightsizing Heuristics</h4>
-            <div class="space-y-3 text-xs text-slate-300">
-              <div class="p-3 bg-rose-950/30 border border-rose-900/50 rounded-xl">
-                <p class="font-semibold text-rose-400 flex items-center gap-1.5">
-                  <span class="w-2 h-2 rounded-full bg-rose-400"></span> Idle Detection Rule
-                </p>
-                <p class="mt-1">VM CPU is below 10% for over 90% of observed hours. Recommended action: <strong>Decommission or hibernate</strong>.</p>
-              </div>
-              <div class="p-3 bg-amber-950/30 border border-amber-900/50 rounded-xl">
-                <p class="font-semibold text-amber-400 flex items-center gap-1.5">
-                  <span class="w-2 h-2 rounded-full bg-amber-400"></span> Over-Provisioned Rule
-                </p>
-                <p class="mt-1">Peak CPU never exceeds 40%. Recommended action: <strong>Downsize instance family by 50%</strong>.</p>
-              </div>
-            </div>
-          </div>
-          <div class="text-xs text-slate-400 p-3 bg-slate-950/50 rounded-xl border border-slate-800">
-            Estimated waste savings potential: <span class="text-emerald-400 font-bold" id="waste-potential-text">$--</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- VM Table -->
-      <div class="bg-dark-900 border border-slate-800 rounded-2xl overflow-hidden">
-        <div class="px-5 py-3 border-b border-slate-800 flex justify-between items-center">
-          <h4 class="font-bold text-white text-sm">Monitored Virtual Machines (<span id="vm-count-badge">0</span>)</h4>
-        </div>
-        <div class="overflow-x-auto max-h-[460px] overflow-y-auto">
-          <table class="w-full text-left text-xs text-slate-300">
-            <thead class="bg-slate-950/80 sticky top-0 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
-              <tr>
-                <th class="px-4 py-3">VM ID</th>
-                <th class="px-4 py-3">Avg CPU %</th>
-                <th class="px-4 py-3">Min CPU %</th>
-                <th class="px-4 py-3">Peak CPU %</th>
-                <th class="px-4 py-3">% Time &lt; 10%</th>
-                <th class="px-4 py-3">Total Cost ($)</th>
-                <th class="px-4 py-3">Est. Waste ($)</th>
-                <th class="px-4 py-3">Status</th>
-              </tr>
-            </thead>
-            <tbody id="vm-table-body" class="divide-y divide-slate-800/60">
-              <!-- Dynamically populated -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- TAB 3: DEMAND FORECASTING -->
-    <section id="view-forecast" class="tab-view space-y-6 hidden">
-      <div class="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h3 class="text-xl font-bold text-white">Workload Demand Forecasting Engine</h3>
-          <p class="text-xs text-slate-400">Proactive machine learning forecasting vs statistical baselines</p>
-        </div>
-      </div>
-
-      <!-- Accuracy KPI Badges -->
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4" id="forecast-kpi-cards">
-        <div class="bg-dark-900 border border-slate-800 rounded-2xl p-4">
-          <p class="text-xs text-slate-400 uppercase font-medium">Random Forest RMSE</p>
-          <h4 id="rf-rmse-val" class="text-2xl font-bold text-emerald-400 mt-1">--</h4>
-          <p class="text-xs text-slate-400 mt-0.5">Root Mean Squared Error</p>
-        </div>
-        <div class="bg-dark-900 border border-slate-800 rounded-2xl p-4">
-          <p class="text-xs text-slate-400 uppercase font-medium">Random Forest MAPE</p>
-          <h4 id="rf-mape-val" class="text-2xl font-bold text-emerald-400 mt-1">--%</h4>
-          <p class="text-xs text-slate-400 mt-0.5">Mean Absolute Percentage Error</p>
-        </div>
-        <div class="bg-dark-900 border border-slate-800 rounded-2xl p-4">
-          <p class="text-xs text-slate-400 uppercase font-medium">Baseline Outperformance</p>
-          <h4 class="text-2xl font-bold text-indigo-400 mt-1">Confirmed</h4>
-          <p class="text-xs text-slate-400 mt-0.5">Beats 3-hr Moving Average Baseline</p>
-        </div>
-      </div>
-
-      <!-- Forecast Line Chart -->
-      <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5">
-        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-          <div>
-            <h4 class="font-bold text-white text-base">Actual vs Predicted Demand Curve</h4>
-            <p class="text-xs text-slate-400">Continuous test timeline comparing actual load to ML predictions</p>
-          </div>
-          <div class="flex items-center gap-3 text-xs">
-            <span class="flex items-center gap-1.5"><span class="w-3 h-0.5 bg-blue-500"></span> Actual</span>
-            <span class="flex items-center gap-1.5"><span class="w-3 h-0.5 bg-emerald-500"></span> ML Forecast</span>
-          </div>
-        </div>
-        <div class="h-80">
-          <canvas id="forecastChart"></canvas>
-        </div>
-      </div>
-
-      <!-- Model Comparison Table -->
-      <div class="bg-dark-900 border border-slate-800 rounded-2xl overflow-hidden">
-        <div class="px-5 py-3 border-b border-slate-800">
-          <h4 class="font-bold text-white text-sm">Forecasting Model Comparison</h4>
-        </div>
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs text-slate-300">
-            <thead class="bg-slate-950/80 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
-              <tr>
-                <th class="px-4 py-3">Model Architecture</th>
-                <th class="px-4 py-3">RMSE</th>
-                <th class="px-4 py-3">MAE</th>
-                <th class="px-4 py-3">MAPE (%)</th>
-                <th class="px-4 py-3">Beats Baseline?</th>
-              </tr>
-            </thead>
-            <tbody id="forecast-metrics-body" class="divide-y divide-slate-800/60">
-              <!-- Dynamically populated -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- TAB 4: DECISIONS & AUDIT -->
-    <section id="view-decisions" class="tab-view space-y-6 hidden">
-      <div class="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h3 class="text-xl font-bold text-white">Autonomous Scaling Audit Trail</h3>
-          <p class="text-xs text-slate-400">Tamper-evident log of scaling actions with human-readable explanations</p>
-        </div>
-        <div class="flex items-center gap-2 text-xs">
-          <span class="px-2.5 py-1 rounded-lg bg-emerald-950 text-emerald-400 border border-emerald-800">Action: Add</span>
-          <span class="px-2.5 py-1 rounded-lg bg-rose-950 text-rose-400 border border-rose-800">Action: Remove</span>
-          <span class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 border border-slate-700">Action: Hold</span>
-        </div>
-      </div>
-
-      <!-- Decisions Table -->
-      <div class="bg-dark-900 border border-slate-800 rounded-2xl overflow-hidden">
-        <div class="overflow-x-auto max-h-[580px] overflow-y-auto">
-          <table class="w-full text-left text-xs text-slate-300">
-            <thead class="bg-slate-950/80 sticky top-0 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
-              <tr>
-                <th class="px-4 py-3">Timestamp</th>
-                <th class="px-4 py-3">Demand</th>
-                <th class="px-4 py-3">Forecast</th>
-                <th class="px-4 py-3">Replicas</th>
-                <th class="px-4 py-3">Action</th>
-                <th class="px-4 py-3">Cost Δ</th>
-                <th class="px-4 py-3">SLA Risk</th>
-                <th class="px-4 py-3 w-1/2">Plain-English Audit Explanation</th>
-              </tr>
-            </thead>
-            <tbody id="decisions-table-body" class="divide-y divide-slate-800/60">
-              <!-- Dynamically populated -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- TAB 5: EVALUATION -->
-    <section id="view-evaluation" class="tab-view space-y-6 hidden">
-      <div>
-        <h3 class="text-xl font-bold text-white">Autoscaling Benchmark &amp; Strategy Evaluation</h3>
-        <p class="text-xs text-slate-400">Head-to-head comparison of Static, Threshold-based, and RL Reinforcement Learning</p>
-      </div>
-
-      <!-- Benchmark Table -->
-      <div class="bg-dark-900 border border-slate-800 rounded-2xl overflow-hidden">
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs text-slate-300">
-            <thead class="bg-slate-950/80 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
-              <tr>
-                <th class="px-5 py-3.5">Strategy</th>
-                <th class="px-5 py-3.5">Total Cost ($)</th>
-                <th class="px-5 py-3.5">SLA Violations</th>
-                <th class="px-5 py-3.5">SLA Compliance (%)</th>
-                <th class="px-5 py-3.5">Avg Utilization (%)</th>
-                <th class="px-5 py-3.5">Cost Reduction (%)</th>
-              </tr>
-            </thead>
-            <tbody id="evaluation-table-body" class="divide-y divide-slate-800/60 font-medium">
-              <!-- Dynamically populated -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Evaluation Dual Charts -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5">
-          <h4 class="font-bold text-white text-sm mb-1">Total Cost Benchmark ($)</h4>
-          <p class="text-xs text-slate-400 mb-4">Lower is better. Demonstrates autonomous savings.</p>
-          <div class="h-64">
-            <canvas id="evalCostChart"></canvas>
-          </div>
-        </div>
-        <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5">
-          <h4 class="font-bold text-white text-sm mb-1">SLA Violations Count</h4>
-          <p class="text-xs text-slate-400 mb-4">Lower is better. Demonstrates performance reliability.</p>
-          <div class="h-64">
-            <canvas id="evalViolationsChart"></canvas>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- TAB 6: IAC DEPLOYMENT -->
-    <section id="view-deployment" class="tab-view space-y-6 hidden">
-      <div>
-        <h3 class="text-xl font-bold text-white">Infrastructure-as-Code &amp; Kubernetes Deployment</h3>
-        <p class="text-xs text-slate-400">Automated Terraform HCL and Kubernetes manifest generation</p>
-      </div>
-
-      <!-- Safety Rules Card -->
-      <div class="p-4 bg-emerald-950/30 border border-emerald-900/50 rounded-2xl text-xs space-y-2">
-        <div class="flex items-center gap-2 text-emerald-400 font-bold text-sm">
-          <i data-lucide="shield-alert" class="w-5 h-5"></i> Deployment Agent Safety Invariants Enforced
-        </div>
-        <ul class="grid grid-cols-1 md:grid-cols-3 gap-2 text-slate-300">
-          <li class="flex items-center gap-2"><i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i> Server bounds: 1 &le; N &le; 10 replicas</li>
-          <li class="flex items-center gap-2"><i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i> Rate limiter: Max &plusmn;1 server change per step</li>
-          <li class="flex items-center gap-2"><i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i> Dry-run execution mode active by default</li>
-        </ul>
-      </div>
-
-      <!-- Code Snippets Grid -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Terraform tfvars -->
-        <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5 flex flex-col">
-          <div class="flex items-center justify-between mb-3">
-            <span class="text-xs font-mono text-indigo-400 font-semibold flex items-center gap-1.5">
-              <i data-lucide="file-code" class="w-4 h-4"></i> outputs/terraform/terraform.tfvars
-            </span>
-            <button onclick="copyCode('tfvars-code')" class="text-xs text-slate-400 hover:text-white px-2 py-1 bg-slate-800 rounded border border-slate-700">Copy</button>
-          </div>
-          <pre id="tfvars-code" class="bg-slate-950 p-4 rounded-xl text-xs font-mono text-emerald-300 overflow-x-auto flex-1 border border-slate-800"># Loading...</pre>
-        </div>
-
-        <!-- Terraform variables.tf -->
-        <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5 flex flex-col">
-          <div class="flex items-center justify-between mb-3">
-            <span class="text-xs font-mono text-indigo-400 font-semibold flex items-center gap-1.5">
-              <i data-lucide="file-code" class="w-4 h-4"></i> outputs/terraform/variables.tf
-            </span>
-            <button onclick="copyCode('variables-code')" class="text-xs text-slate-400 hover:text-white px-2 py-1 bg-slate-800 rounded border border-slate-700">Copy</button>
-          </div>
-          <pre id="variables-code" class="bg-slate-950 p-4 rounded-xl text-xs font-mono text-indigo-300 overflow-x-auto flex-1 border border-slate-800"># Loading...</pre>
-        </div>
-
-        <!-- Kubernetes deployment.yaml -->
-        <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5 flex flex-col lg:col-span-2">
-          <div class="flex items-center justify-between mb-3">
-            <span class="text-xs font-mono text-indigo-400 font-semibold flex items-center gap-1.5">
-              <i data-lucide="box" class="w-4 h-4"></i> outputs/terraform/deployment.yaml (Kubernetes)
-            </span>
-            <button onclick="copyCode('k8s-code')" class="text-xs text-slate-400 hover:text-white px-2 py-1 bg-slate-800 rounded border border-slate-700">Copy</button>
-          </div>
-          <pre id="k8s-code" class="bg-slate-950 p-4 rounded-xl text-xs font-mono text-amber-300 overflow-x-auto h-48 border border-slate-800"># Loading...</pre>
-        </div>
-      </div>
-    </section>
-
-    <!-- TAB 7: LIVE SIMULATOR -->
-    <section id="view-simulator" class="tab-view space-y-6 hidden">
-      <div>
-        <h3 class="text-xl font-bold text-white">Interactive Scaling Decision Simulator</h3>
-        <p class="text-xs text-slate-400">Viva &amp; Demonstration Sandbox: Test custom load scenarios and observe real-time agent reactions</p>
-      </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Interactive Controls -->
-        <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5 space-y-4">
-          <h4 class="font-bold text-white text-sm mb-3">Input Parameters</h4>
-          <div>
-            <label class="block text-xs text-slate-400 mb-1">Current Active Servers (1-10)</label>
-            <input type="number" id="sim-servers" value="3" min="1" max="10" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm text-white focus:ring-2 focus:ring-indigo-500 outline-none">
-          </div>
-          <div>
-            <label class="block text-xs text-slate-400 mb-1">Current Observed Demand (Units)</label>
-            <input type="number" id="sim-demand" value="280" min="0" step="10" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm text-white focus:ring-2 focus:ring-indigo-500 outline-none">
-          </div>
-          <div>
-            <label class="block text-xs text-slate-400 mb-1">Forecasted Next-Hour Demand (Units)</label>
-            <input type="number" id="sim-forecast" value="360" min="0" step="10" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-sm text-white focus:ring-2 focus:ring-indigo-500 outline-none">
-          </div>
-          <div class="grid grid-cols-2 gap-3 text-xs">
-            <div>
-              <label class="block text-slate-400 mb-1">Server Capacity</label>
-              <input type="number" id="sim-capacity" value="100" readonly class="w-full bg-slate-950/60 border border-slate-800 rounded-lg p-2 text-slate-400">
-            </div>
-            <div>
-              <label class="block text-slate-400 mb-1">Hourly Price ($)</label>
-              <input type="number" id="sim-price" value="1.0" readonly class="w-full bg-slate-950/60 border border-slate-800 rounded-lg p-2 text-slate-400">
-            </div>
-          </div>
-          <button onclick="runInteractiveStep()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20">
-            <i data-lucide="play" class="w-4 h-4"></i> Run Agent Decision Step
+        <!-- Unauthenticated CTA buttons (shown when logged out on landing) -->
+        <div id="auth-buttons-unlogged" class="flex items-center gap-2">
+          <button onclick="navigateTo('auth')" class="text-xs font-semibold text-slate-700 hover:text-sage-800 px-3 py-2 rounded-lg hover:bg-cream-200 transition">
+            Sign In
+          </button>
+          <button onclick="launchConsole()" class="text-xs font-semibold text-white bg-sage-600 hover:bg-sage-700 px-3.5 py-2 rounded-xl shadow-sm transition flex items-center gap-1.5 glow-sage">
+            <i data-lucide="gauge" class="w-3.5 h-3.5"></i> Launch Console
           </button>
         </div>
 
-        <!-- Simulation Result Output -->
-        <div class="lg:col-span-2 bg-dark-900 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
-          <div>
-            <h4 class="font-bold text-white text-sm mb-3">Agent Reaction &amp; Safety Verification</h4>
-            <div id="sim-result-box" class="space-y-4">
-              <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
-                <div class="p-3 bg-slate-950 rounded-xl border border-slate-800">
-                  <span class="block text-xs text-slate-400">Action</span>
-                  <span id="sim-out-action" class="font-bold text-emerald-400 text-base uppercase">--</span>
-                </div>
-                <div class="p-3 bg-slate-950 rounded-xl border border-slate-800">
-                  <span class="block text-xs text-slate-400">Scaled Replicas</span>
-                  <span id="sim-out-servers" class="font-bold text-white text-base">--</span>
-                </div>
-                <div class="p-3 bg-slate-950 rounded-xl border border-slate-800">
-                  <span class="block text-xs text-slate-400">Cluster Capacity</span>
-                  <span id="sim-out-capacity" class="font-bold text-indigo-400 text-base">--</span>
-                </div>
-                <div class="p-3 bg-slate-950 rounded-xl border border-slate-800">
-                  <span class="block text-xs text-slate-400">Projected Util %</span>
-                  <span id="sim-out-util" class="font-bold text-amber-400 text-base">--</span>
-                </div>
-              </div>
+        <!-- Authenticated Profile Menu (shown when logged in) -->
+        <div id="auth-profile-logged" class="hidden items-center gap-2">
+          <button onclick="navigateTo('landing')" title="Back to Home / Landing" class="p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-cream-200 transition">
+            <i data-lucide="home" class="w-4 h-4"></i>
+          </button>
+          <div class="flex items-center gap-2 pl-2 border-l border-cream-300">
+            <div class="w-8 h-8 rounded-full bg-sage-200 text-sage-800 font-bold flex items-center justify-center text-xs border border-sage-300 shadow-sm" id="user-avatar-initials">
+              AD
+            </div>
+            <div class="hidden md:block text-left">
+              <span class="block text-xs font-bold text-slate-900 leading-tight" id="user-display-name">Cloud Architect</span>
+              <span class="block text-[10px] text-slate-500" id="user-display-role">Lead DevOps</span>
+            </div>
+            <button onclick="logout()" title="Sign Out" class="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition ml-1">
+              <i data-lucide="log-out" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
 
-              <!-- Explanation badge -->
-              <div class="p-4 bg-indigo-950/30 border border-indigo-900/50 rounded-xl space-y-1">
-                <div class="text-xs font-semibold text-indigo-400 flex items-center gap-1.5">
-                  <i data-lucide="sparkles" class="w-4 h-4"></i> Audit &amp; Explainability Agent Rationale
-                </div>
-                <p id="sim-out-explanation" class="text-xs text-slate-200 leading-relaxed">
-                  Configure inputs and click "Run Agent Decision Step" to execute live simulation.
-                </p>
-              </div>
+      </div>
 
-              <!-- Deployment preview -->
-              <div class="p-3 bg-slate-950 rounded-xl border border-slate-800 text-xs">
-                <span class="text-slate-400 block mb-1">Generated Execution Command:</span>
-                <code id="sim-out-cmd" class="text-emerald-400 font-mono">kubectl scale deployment cloud-worker-deployment --replicas=...</code>
-              </div>
+    </div>
+  </header>
+
+  <!-- ========================================================================= -->
+  <!-- PAGE 1: LANDING PAGE -->
+  <!-- ========================================================================= -->
+  <div id="page-landing" class="page-container">
+
+    <!-- Hero Section -->
+    <section class="relative pt-12 pb-16 px-4 lg:px-8 overflow-hidden bg-gradient-to-b from-cream-100 via-cream-50 to-cream-100 border-b border-cream-200">
+      
+      <!-- Subtle Decorative Eco-Cloud background shapes -->
+      <div class="absolute inset-0 pointer-events-none opacity-40">
+        <div class="absolute -top-24 -left-20 w-96 h-96 rounded-full bg-sage-100 blur-3xl"></div>
+        <div class="absolute top-1/2 -right-20 w-80 h-80 rounded-full bg-cream-300 blur-3xl"></div>
+      </div>
+
+      <div class="max-w-5xl mx-auto text-center relative z-10 space-y-6">
+        
+        <!-- Category Pill -->
+        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-sage-100/90 border border-sage-300 text-sage-800 text-xs font-semibold shadow-sm">
+          <i data-lucide="sparkles" class="w-3.5 h-3.5 text-sage-600"></i>
+          <span>Autonomous Cloud Cost &amp; Performance Optimizer &bull; Team XOXO (T-09)</span>
+        </div>
+
+        <!-- Main Headline -->
+        <h1 class="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-tight leading-[1.15]">
+          Autonomous Cloud Cost &amp; <br class="hidden sm:block">
+          <span class="text-transparent bg-clip-text bg-gradient-to-r from-sage-700 via-sage-600 to-emerald-500">
+            Performance Optimizer
+          </span>
+        </h1>
+
+        <!-- Subheadline -->
+        <p class="max-w-3xl mx-auto text-base sm:text-lg text-slate-600 leading-relaxed font-normal">
+          Cloud inefficiencies arise from over-provisioning, zombie idle machines running 24/7, and reactive autoscaling lag. 
+          Our closed-loop system pairs <strong>supervised demand forecasting</strong> with <strong>tabular Q-learning</strong> to cut cloud spend by <strong>21.8%</strong> with guaranteed <strong>99.01% SLA compliance</strong>.
+        </p>
+
+        <!-- CTA Action Buttons -->
+        <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
+          <button onclick="launchConsole()" class="px-6 py-3 rounded-xl bg-sage-600 hover:bg-sage-700 text-white font-semibold text-sm shadow-md hover:shadow-lg transition-all flex items-center gap-2 glow-sage">
+            <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Launch Live Console
+          </button>
+          <button onclick="quickTestSimulator()" class="px-5 py-3 rounded-xl bg-white hover:bg-cream-50 text-slate-800 font-semibold text-sm border border-cream-300 shadow-sm hover:border-sage-300 transition flex items-center gap-2">
+            <i data-lucide="sliders" class="w-4 h-4 text-sage-600"></i> Interactive Simulator
+          </button>
+          <button onclick="navigateTo('auth')" class="px-5 py-3 rounded-xl bg-cream-200 hover:bg-cream-300 text-slate-700 font-semibold text-sm transition flex items-center gap-2">
+            <i data-lucide="key" class="w-4 h-4 text-slate-500"></i> Sign In / Demo Account
+          </button>
+        </div>
+
+        <!-- Live Metrics Strip -->
+        <div class="pt-8 max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-3 text-left">
+          <div class="card-beige p-4 rounded-2xl">
+            <span class="text-xs text-slate-500 font-medium uppercase tracking-wider block">Cost Reduction</span>
+            <span class="text-2xl font-extrabold text-sage-700 mt-1 block">21.78%</span>
+            <span class="text-[11px] text-slate-500">Net verified spend savings</span>
+          </div>
+          <div class="card-beige p-4 rounded-2xl">
+            <span class="text-xs text-slate-500 font-medium uppercase tracking-wider block">SLA Compliance</span>
+            <span class="text-2xl font-extrabold text-slate-900 mt-1 block">99.01%</span>
+            <span class="text-[11px] text-emerald-600 font-medium">Asymmetric breach penalty</span>
+          </div>
+          <div class="card-beige p-4 rounded-2xl">
+            <span class="text-xs text-slate-500 font-medium uppercase tracking-wider block">Forecast Accuracy</span>
+            <span class="text-2xl font-extrabold text-sage-700 mt-1 block">4.85%</span>
+            <span class="text-[11px] text-slate-500">Random Forest MAPE score</span>
+          </div>
+          <div class="card-beige p-4 rounded-2xl">
+            <span class="text-xs text-slate-500 font-medium uppercase tracking-wider block">IaC Automation</span>
+            <span class="text-2xl font-extrabold text-slate-900 mt-1 block">100%</span>
+            <span class="text-[11px] text-slate-500">Terraform &amp; Kubernetes CLI</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Problem vs Solution Section -->
+    <section id="features" class="py-16 px-4 lg:px-8 max-w-7xl mx-auto">
+      <div class="text-center max-w-2xl mx-auto mb-12">
+        <h2 class="text-xs uppercase font-bold text-sage-700 tracking-wider">Problem vs. Autonomous Solution</h2>
+        <h3 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">Why Traditional Cloud Autoscaling Fails</h3>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        
+        <!-- The Problem -->
+        <div class="card-beige p-6 sm:p-8 rounded-3xl border-rose-200/80 bg-gradient-to-b from-white to-rose-50/20">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="p-2.5 rounded-xl bg-rose-100 text-rose-700 border border-rose-200">
+              <i data-lucide="alert-octagon" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-slate-900 text-lg">The 5 Core Cloud Inefficiencies</h4>
+              <p class="text-xs text-slate-500">Documented in enterprise DevOps audits</p>
             </div>
           </div>
+          <ul class="space-y-3.5 text-sm text-slate-600">
+            <li class="flex items-start gap-2.5">
+              <span class="w-5 h-5 rounded-full bg-rose-100 text-rose-700 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">&times;</span>
+              <span><strong>Over-provisioned compute &amp; storage:</strong> Provisioned for extreme yearly spikes, averaging only 15-25% CPU on regular days.</span>
+            </li>
+            <li class="flex items-start gap-2.5">
+              <span class="w-5 h-5 rounded-full bg-rose-100 text-rose-700 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">&times;</span>
+              <span><strong>Idle services running 24/7:</strong> Development, staging, and legacy microservices consume billable hours over nights and weekends.</span>
+            </li>
+            <li class="flex items-start gap-2.5">
+              <span class="w-5 h-5 rounded-full bg-rose-100 text-rose-700 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">&times;</span>
+              <span><strong>Lack of demand forecasting:</strong> CloudWatch reactive alarms fire <em>after</em> CPU crosses 70%, by which point users experience timeout errors.</span>
+            </li>
+            <li class="flex items-start gap-2.5">
+              <span class="w-5 h-5 rounded-full bg-rose-100 text-rose-700 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">&times;</span>
+              <span><strong>Manual &amp; error-prone tuning:</strong> Engineers manually adjusting replica YAML files with high probability of misconfiguration.</span>
+            </li>
+            <li class="flex items-start gap-2.5">
+              <span class="w-5 h-5 rounded-full bg-rose-100 text-rose-700 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">&times;</span>
+              <span><strong>Rising cloud invoices:</strong> Costs balloon month-over-month without proportional user throughput or response time improvements.</span>
+            </li>
+          </ul>
+        </div>
 
-          <div class="mt-4 pt-3 border-t border-slate-800 text-xs text-slate-400 flex items-center gap-2">
-            <i data-lucide="check" class="w-4 h-4 text-emerald-400"></i>
-            <span>Safety status: <strong id="sim-out-safety" class="text-slate-200">Awaiting input</strong></span>
+        <!-- The Solution -->
+        <div class="card-beige p-6 sm:p-8 rounded-3xl border-sage-300 bg-gradient-to-b from-white to-sage-50/30">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="p-2.5 rounded-xl bg-sage-100 text-sage-700 border border-sage-200">
+              <i data-lucide="check-check" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h4 class="font-bold text-slate-900 text-lg">Our Multi-Agent Autonomous Engine</h4>
+              <p class="text-xs text-slate-500">Closed-loop proactive scaling and rightsizing</p>
+            </div>
           </div>
+          <ul class="space-y-3.5 text-sm text-slate-700">
+            <li class="flex items-start gap-2.5">
+              <span class="w-5 h-5 rounded-full bg-sage-100 text-sage-700 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">&#10003;</span>
+              <span><strong>Automated idle detection:</strong> Flags VMs with CPU &lt; 10% for &gt; 90% of hours and highlights exact financial waste in dollars.</span>
+            </li>
+            <li class="flex items-start gap-2.5">
+              <span class="w-5 h-5 rounded-full bg-sage-100 text-sage-700 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">&#10003;</span>
+              <span><strong>Proactive 24h ML forecast:</strong> Random Forest model with 24 lag features forecasts surges before they occur (RMSE: 33.57).</span>
+            </li>
+            <li class="flex items-start gap-2.5">
+              <span class="w-5 h-5 rounded-full bg-sage-100 text-sage-700 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">&#10003;</span>
+              <span><strong>Q-Learning RL scaling:</strong> Balances hourly VM cost against an asymmetric \$100 SLA violation penalty to eliminate thrashing.</span>
+            </li>
+            <li class="flex items-start gap-2.5">
+              <span class="w-5 h-5 rounded-full bg-sage-100 text-sage-700 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">&#10003;</span>
+              <span><strong>Safe IaC generation:</strong> Clamps to safe replica boundaries ($1 \le N \le 10$) and writes ready-to-apply Terraform &amp; Kubernetes code.</span>
+            </li>
+            <li class="flex items-start gap-2.5">
+              <span class="w-5 h-5 rounded-full bg-sage-100 text-sage-700 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">&#10003;</span>
+              <span><strong>Explainable AI audit trails:</strong> Every scaling action generates plain-English justification for enterprise trust and compliance.</span>
+            </li>
+          </ul>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- The 5 Cooperative Agents Section -->
+    <section id="agents" class="py-16 px-4 lg:px-8 bg-cream-200/50 border-y border-cream-300">
+      <div class="max-w-7xl mx-auto space-y-12">
+        <div class="text-center max-w-2xl mx-auto">
+          <h2 class="text-xs uppercase font-bold text-sage-700 tracking-wider">Five Specialized Cooperative Agents</h2>
+          <h3 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">Modular Enterprise Architecture</h3>
+          <p class="text-xs text-slate-500 mt-2">Each agent executes an isolated responsibility within a synchronized pipeline.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          
+          <!-- Agent 1 -->
+          <div class="card-beige p-5 rounded-2xl flex flex-col justify-between">
+            <div class="space-y-3">
+              <div class="w-10 h-10 rounded-xl bg-sage-100 border border-sage-300 flex items-center justify-center text-sage-700 font-bold">1</div>
+              <h4 class="font-bold text-slate-900 text-sm">Data &amp; Monitoring Agent</h4>
+              <p class="text-xs text-slate-600 leading-relaxed">
+                Ingests VM CPU &amp; RAM metrics. Analyzes time distributions to isolate idle and over-provisioned instances, calculating financial waste.
+              </p>
+            </div>
+            <div class="mt-4 pt-3 border-t border-cream-200 text-[11px] font-mono text-sage-700">agents/monitor.py</div>
+          </div>
+
+          <!-- Agent 2 -->
+          <div class="card-beige p-5 rounded-2xl flex flex-col justify-between">
+            <div class="space-y-3">
+              <div class="w-10 h-10 rounded-xl bg-blue-100 border border-blue-300 flex items-center justify-center text-blue-700 font-bold">2</div>
+              <h4 class="font-bold text-slate-900 text-sm">Demand Forecasting Agent</h4>
+              <p class="text-xs text-slate-600 leading-relaxed">
+                Trains lag-feature Random Forest regressors and statistical models to predict next-hour cloud workload with 4.85% MAPE error rate.
+              </p>
+            </div>
+            <div class="mt-4 pt-3 border-t border-cream-200 text-[11px] font-mono text-blue-700">agents/forecast.py</div>
+          </div>
+
+          <!-- Agent 3 -->
+          <div class="card-beige p-5 rounded-2xl flex flex-col justify-between">
+            <div class="space-y-3">
+              <div class="w-10 h-10 rounded-xl bg-amber-100 border border-amber-300 flex items-center justify-center text-amber-700 font-bold">3</div>
+              <h4 class="font-bold text-slate-900 text-sm">Optimization Agent</h4>
+              <p class="text-xs text-slate-600 leading-relaxed">
+                Learns optimal proactive policies in custom CloudEnv simulator. Coordinates state transitions (load, forecast, servers) to cut spend.
+              </p>
+            </div>
+            <div class="mt-4 pt-3 border-t border-cream-200 text-[11px] font-mono text-amber-700">agents/optimizer.py</div>
+          </div>
+
+          <!-- Agent 4 -->
+          <div class="card-beige p-5 rounded-2xl flex flex-col justify-between">
+            <div class="space-y-3">
+              <div class="w-10 h-10 rounded-xl bg-emerald-100 border border-emerald-300 flex items-center justify-center text-emerald-700 font-bold">4</div>
+              <h4 class="font-bold text-slate-900 text-sm">Deployment Agent</h4>
+              <p class="text-xs text-slate-600 leading-relaxed">
+                Enforces safety rate-limiters (max &plusmn;1 delta) and boundary constraints. Emits production Terraform and Kubernetes scaling commands.
+              </p>
+            </div>
+            <div class="mt-4 pt-3 border-t border-cream-200 text-[11px] font-mono text-emerald-700">agents/deploy.py</div>
+          </div>
+
+          <!-- Agent 5 -->
+          <div class="card-beige p-5 rounded-2xl flex flex-col justify-between">
+            <div class="space-y-3">
+              <div class="w-10 h-10 rounded-xl bg-purple-100 border border-purple-300 flex items-center justify-center text-purple-700 font-bold">5</div>
+              <h4 class="font-bold text-slate-900 text-sm">Audit &amp; Explain Agent</h4>
+              <p class="text-xs text-slate-600 leading-relaxed">
+                Produces tamper-evident CSV decision records and translates mathematical scaling vectors into plain-English justifications for teams.
+              </p>
+            </div>
+            <div class="mt-4 pt-3 border-t border-cream-200 text-[11px] font-mono text-purple-700">agents/audit.py</div>
+          </div>
+
         </div>
       </div>
     </section>
 
-  </main>
+    <!-- Benchmarks Snapshot Section -->
+    <section id="benchmarks" class="py-16 px-4 lg:px-8 max-w-7xl mx-auto">
+      <div class="card-beige p-6 sm:p-10 rounded-3xl space-y-8">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <span class="text-xs uppercase font-bold text-sage-700 tracking-wider">Evaluation Benchmarks</span>
+            <h3 class="text-2xl font-extrabold text-slate-900 mt-0.5">Empirical Performance Comparison</h3>
+          </div>
+          <button onclick="launchConsole('evaluation')" class="text-xs font-semibold px-4 py-2 rounded-xl bg-cream-200 hover:bg-cream-300 text-slate-800 transition flex items-center gap-1.5">
+            <span>Explore Full Evaluation Tab</span> &rarr;
+          </button>
+        </div>
 
-  <!-- Footer -->
-  <footer class="border-t border-slate-800 bg-dark-950 px-4 py-4 text-center text-xs text-slate-400">
-    Autonomous Cloud Cost &amp; Performance Optimizer &bull; Team XOXO (T-09) &bull; Built with FastAPI &amp; Vanilla JS / Chart.js
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs sm:text-sm text-slate-700">
+            <thead class="bg-cream-100 text-slate-500 uppercase tracking-wider font-semibold border-b border-cream-300">
+              <tr>
+                <th class="px-5 py-3">Autoscaling Policy</th>
+                <th class="px-5 py-3">Total Cloud Spend ($)</th>
+                <th class="px-5 py-3">SLA Violations</th>
+                <th class="px-5 py-3">Compliance %</th>
+                <th class="px-5 py-3">Avg Utilization</th>
+                <th class="px-5 py-3">Net Cost Reduction</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-cream-200 font-medium">
+              <tr class="hover:bg-cream-50/50">
+                <td class="px-5 py-3 text-slate-900">Static Allocation (Fixed 8 VMs)</td>
+                <td class="px-5 py-3 font-mono">$808.00</td>
+                <td class="px-5 py-3 font-mono">0</td>
+                <td class="px-5 py-3 font-mono">100.0%</td>
+                <td class="px-5 py-3 font-mono">41.2%</td>
+                <td class="px-5 py-3 text-slate-500">Baseline (0.0%)</td>
+              </tr>
+              <tr class="hover:bg-cream-50/50">
+                <td class="px-5 py-3 text-slate-900">Reactive Threshold (30% / 70%)</td>
+                <td class="px-5 py-3 font-mono text-rose-700">$954.00</td>
+                <td class="px-5 py-3 font-mono text-rose-700">1</td>
+                <td class="px-5 py-3 font-mono">99.01%</td>
+                <td class="px-5 py-3 font-mono">38.6%</td>
+                <td class="px-5 py-3 font-mono text-rose-700">-18.07% (Lag penalty)</td>
+              </tr>
+              <tr class="bg-sage-50/60 hover:bg-sage-100/50 font-bold text-sage-900">
+                <td class="px-5 py-3 flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-sage-500 animate-ping"></span>
+                  Autonomous RL Optimizer (Ours)
+                </td>
+                <td class="px-5 py-3 font-mono text-sage-800">$632.00</td>
+                <td class="px-5 py-3 font-mono text-sage-800">1</td>
+                <td class="px-5 py-3 font-mono">99.01%</td>
+                <td class="px-5 py-3 font-mono">59.4%</td>
+                <td class="px-5 py-3 font-mono text-emerald-700">+21.78% Saved</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Bottom CTA Banner -->
+    <section class="py-16 px-4 lg:px-8 max-w-5xl mx-auto text-center">
+      <div class="card-beige p-10 rounded-3xl bg-gradient-to-tr from-cream-100 via-white to-sage-50 border-sage-200 space-y-5">
+        <h3 class="text-2xl sm:text-3xl font-extrabold text-slate-900">Experience Real-Time Autonomous Rightsizing</h3>
+        <p class="max-w-xl mx-auto text-sm text-slate-600">
+          Step into the live operator console to inspect fleet metrics, verify forecast curves, audit plain-English scaling decisions, and test the simulator.
+        </p>
+        <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
+          <button onclick="launchConsole()" class="px-6 py-3 rounded-xl bg-sage-600 hover:bg-sage-700 text-white font-semibold text-sm shadow-md transition glow-sage">
+            Open Interactive Console
+          </button>
+          <button onclick="navigateTo('auth')" class="px-6 py-3 rounded-xl bg-cream-200 hover:bg-cream-300 text-slate-800 font-semibold text-sm transition">
+            Sign In with Demo Credentials
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- PAGE 2: AUTHENTICATION (SIGN IN / REGISTER) -->
+  <!-- ========================================================================= -->
+  <div id="page-auth" class="page-container hidden py-12 px-4 flex-1 flex items-center justify-center">
+    <div class="max-w-md w-full card-beige p-8 rounded-3xl shadow-lg border-cream-300 relative">
+      
+      <!-- Back to Landing Link -->
+      <button onclick="navigateTo('landing')" class="absolute top-6 left-6 text-slate-400 hover:text-slate-700 text-xs font-semibold flex items-center gap-1 transition">
+        &larr; Back
+      </button>
+
+      <!-- Auth Header -->
+      <div class="text-center pt-2 mb-6">
+        <div class="w-12 h-12 rounded-2xl bg-sage-100 border border-sage-300 text-sage-700 flex items-center justify-center mx-auto mb-3 shadow-sm">
+          <i data-lucide="shield-check" class="w-6 h-6"></i>
+        </div>
+        <h2 class="text-xl font-bold text-slate-900" id="auth-title">Sign in to CloudOptimizer</h2>
+        <p class="text-xs text-slate-500 mt-1" id="auth-subtitle">Enterprise Autonomous Scaling Controller</p>
+      </div>
+
+      <!-- Quick Demo Login Pill -->
+      <div class="mb-5 p-3 rounded-2xl bg-sage-50 border border-sage-200/80 text-xs text-sage-900 flex items-center justify-between">
+        <div>
+          <span class="font-bold block">1-Click Demo Access</span>
+          <span class="text-[11px] text-sage-700">Pre-loaded Cloud Architect profile</span>
+        </div>
+        <button onclick="fillDemoCredentials()" class="px-3 py-1.5 rounded-lg bg-sage-600 hover:bg-sage-700 text-white font-semibold text-[11px] shadow-sm transition">
+          Quick Fill
+        </button>
+      </div>
+
+      <!-- Auth Tabs Toggle -->
+      <div class="flex rounded-xl bg-cream-200 p-1 mb-5 text-xs font-semibold">
+        <button onclick="setAuthMode('login')" id="btn-auth-tab-login" class="flex-1 py-1.5 rounded-lg bg-white text-slate-900 shadow-sm transition">
+          Sign In
+        </button>
+        <button onclick="setAuthMode('register')" id="btn-auth-tab-register" class="flex-1 py-1.5 rounded-lg text-slate-500 hover:text-slate-900 transition">
+          Register
+        </button>
+      </div>
+
+      <!-- Auth Form -->
+      <form id="auth-form" onsubmit="handleAuthSubmit(event)" class="space-y-4 text-xs">
+        
+        <div id="field-name" class="hidden">
+          <label class="block font-semibold text-slate-700 mb-1">Full Name</label>
+          <input type="text" id="auth-name" placeholder="Sarah Connor" class="w-full bg-cream-50 border border-cream-300 rounded-xl px-3.5 py-2.5 text-slate-900 focus:ring-2 focus:ring-sage-500 focus:bg-white outline-none transition">
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Work Email</label>
+          <input type="email" id="auth-email" required value="admin@cloudopt.ai" class="w-full bg-cream-50 border border-cream-300 rounded-xl px-3.5 py-2.5 text-slate-900 focus:ring-2 focus:ring-sage-500 focus:bg-white outline-none transition font-mono">
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Password</label>
+          <input type="password" id="auth-password" required value="demo123" class="w-full bg-cream-50 border border-cream-300 rounded-xl px-3.5 py-2.5 text-slate-900 focus:ring-2 focus:ring-sage-500 focus:bg-white outline-none transition font-mono">
+        </div>
+
+        <div id="field-role" class="hidden">
+          <label class="block font-semibold text-slate-700 mb-1">Operational Role</label>
+          <select id="auth-role" class="w-full bg-cream-50 border border-cream-300 rounded-xl px-3 py-2 text-slate-800 outline-none">
+            <option value="Lead Cloud Architect">Lead Cloud Architect</option>
+            <option value="DevOps &amp; SRE Engineer">DevOps &amp; SRE Engineer</option>
+            <option value="FinOps Specialist">FinOps Cost Specialist</option>
+            <option value="Academic Evaluator / Professor">Academic Evaluator / Professor</option>
+          </select>
+        </div>
+
+        <div id="auth-error-msg" class="hidden p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium"></div>
+
+        <button type="submit" id="auth-submit-btn" class="w-full py-3 rounded-xl bg-sage-600 hover:bg-sage-700 text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-2 glow-sage">
+          <i data-lucide="log-in" class="w-4 h-4"></i>
+          <span id="auth-btn-label">Sign In to Dashboard</span>
+        </button>
+
+      </form>
+
+      <!-- Guest Explorer Option -->
+      <div class="mt-5 pt-4 border-t border-cream-200 text-center">
+        <button onclick="launchConsole()" class="text-xs text-slate-500 hover:text-sage-700 font-medium transition">
+          Continue as Guest Explorer &rarr;
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- PAGE 3: OPERATOR CONSOLE / DASHBOARD (FULL APP) -->
+  <!-- ========================================================================= -->
+  <div id="page-console" class="page-container hidden flex-1 flex flex-col">
+    
+    <!-- Notification Banner for Free Hosting Sleep -->
+    <div id="hosting-notice" class="bg-sage-100/70 border-b border-sage-200 px-4 py-2 text-xs text-sage-800 flex items-center justify-center gap-2 font-medium">
+      <i data-lucide="info" class="w-4 h-4 text-sage-600"></i>
+      <span>Autonomous agents synchronize in real time. Connected to local FastAPI backend on port 8000.</span>
+    </div>
+
+    <!-- Loading State Banner -->
+    <div id="loading-spinner" class="hidden max-w-7xl mx-auto w-full px-4 pt-4">
+      <div class="bg-sage-50 border border-sage-200 rounded-2xl p-4 text-center text-xs text-sage-800 flex items-center justify-center gap-3 font-medium">
+        <div class="w-4 h-4 border-2 border-sage-600 border-t-transparent rounded-full animate-spin"></div>
+        <span>Querying agent endpoints and loading saved telemetry...</span>
+      </div>
+    </div>
+
+    <!-- Main Content Container for Dashboard Tabs -->
+    <main class="max-w-7xl mx-auto w-full px-4 lg:px-8 py-6 flex-1">
+
+      <!-- TAB 1: OVERVIEW -->
+      <section id="view-overview" class="tab-view space-y-6">
+        <!-- KPI Row -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          
+          <!-- Card 1 -->
+          <div class="card-beige p-5 rounded-2xl relative overflow-hidden">
+            <div class="flex justify-between items-start">
+              <div>
+                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Cloud Cost Reduction</p>
+                <h3 id="kpi-savings-pct" class="text-3xl font-extrabold text-sage-700 mt-1">21.78%</h3>
+                <p id="kpi-cost-saved-usd" class="text-xs text-slate-500 mt-1">Saved $176.00 vs Static</p>
+              </div>
+              <div class="p-3 bg-sage-100 text-sage-700 rounded-xl border border-sage-200">
+                <i data-lucide="wallet" class="w-5 h-5"></i>
+              </div>
+            </div>
+            <div class="mt-3 w-full bg-cream-200 h-1.5 rounded-full overflow-hidden">
+              <div id="kpi-savings-bar" class="bg-sage-600 h-full rounded-full" style="width: 22%"></div>
+            </div>
+          </div>
+
+          <!-- Card 2 -->
+          <div class="card-beige p-5 rounded-2xl relative overflow-hidden">
+            <div class="flex justify-between items-start">
+              <div>
+                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">SLA Compliance</p>
+                <h3 id="kpi-sla-compliance" class="text-3xl font-extrabold text-slate-900 mt-1">99.01%</h3>
+                <p id="kpi-sla-violations" class="text-xs text-slate-500 mt-1">1 Breach Event</p>
+              </div>
+              <div class="p-3 bg-emerald-100 text-emerald-700 rounded-xl border border-emerald-200">
+                <i data-lucide="shield-check" class="w-5 h-5"></i>
+              </div>
+            </div>
+            <div class="mt-3 w-full bg-cream-200 h-1.5 rounded-full overflow-hidden">
+              <div id="kpi-sla-bar" class="bg-emerald-600 h-full rounded-full" style="width: 99%"></div>
+            </div>
+          </div>
+
+          <!-- Card 3 -->
+          <div class="card-beige p-5 rounded-2xl relative overflow-hidden">
+            <div class="flex justify-between items-start">
+              <div>
+                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Idle Waste Detected</p>
+                <h3 id="kpi-idle-vms" class="text-3xl font-extrabold text-rose-600 mt-1">6 VMs</h3>
+                <p id="kpi-idle-waste-usd" class="text-xs text-slate-500 mt-1">$3,064.32 fleet waste</p>
+              </div>
+              <div class="p-3 bg-rose-100 text-rose-700 rounded-xl border border-rose-200">
+                <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+              </div>
+            </div>
+            <div class="mt-3 w-full bg-cream-200 h-1.5 rounded-full overflow-hidden">
+              <div class="bg-rose-500 h-full rounded-full" style="width: 38%"></div>
+            </div>
+          </div>
+
+          <!-- Card 4 -->
+          <div class="card-beige p-5 rounded-2xl relative overflow-hidden">
+            <div class="flex justify-between items-start">
+              <div>
+                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Active Scaling Fleet</p>
+                <h3 id="kpi-active-servers" class="text-3xl font-extrabold text-blue-600 mt-1">3 Replicas</h3>
+                <p class="text-xs text-slate-500 mt-1">Capacity: 100 units/server</p>
+              </div>
+              <div class="p-3 bg-blue-100 text-blue-700 rounded-xl border border-blue-200">
+                <i data-lucide="layers" class="w-5 h-5"></i>
+              </div>
+            </div>
+            <div class="mt-3 w-full bg-cream-200 h-1.5 rounded-full overflow-hidden">
+              <div class="bg-blue-600 h-full rounded-full" style="width: 40%"></div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Charts Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          <!-- Cost Comparison Chart -->
+          <div class="lg:col-span-2 card-beige p-6 rounded-2xl">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h4 class="font-bold text-slate-900 text-base">Autoscaling Benchmark Comparison</h4>
+                <p class="text-xs text-slate-500">Total Infrastructure Spend ($) Across Scaling Policies</p>
+              </div>
+              <span class="text-xs px-2.5 py-1 rounded-lg bg-cream-200 text-slate-700 font-mono font-medium">Test Workload</span>
+            </div>
+            <div class="h-64">
+              <canvas id="overviewCostChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Fleet Efficiency Breakdown -->
+          <div class="card-beige p-6 rounded-2xl flex flex-col justify-between">
+            <div>
+              <h4 class="font-bold text-slate-900 text-base">Cloud Fleet Classification</h4>
+              <p class="text-xs text-slate-500 mb-4">VM Distribution from Monitoring Agent</p>
+              <div class="h-44 flex items-center justify-center">
+                <canvas id="overviewDonutChart"></canvas>
+              </div>
+            </div>
+            <div class="grid grid-cols-3 gap-2 text-center pt-3 border-t border-cream-200 text-xs">
+              <div>
+                <span class="block text-sage-700 font-bold text-sm" id="donut-optimal-cnt">12</span>
+                <span class="text-slate-500">Optimal</span>
+              </div>
+              <div>
+                <span class="block text-rose-600 font-bold text-sm" id="donut-idle-cnt">6</span>
+                <span class="text-slate-500">Idle</span>
+              </div>
+              <div>
+                <span class="block text-amber-600 font-bold text-sm" id="donut-overprov-cnt">7</span>
+                <span class="text-slate-500">Over-Prov</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- System Architecture Card -->
+        <div class="card-beige p-6 rounded-2xl">
+          <h4 class="font-bold text-slate-900 text-base mb-3 flex items-center gap-2">
+            <i data-lucide="network" class="w-5 h-5 text-sage-600"></i> Autonomous Multi-Agent Closed-Loop Execution
+          </h4>
+          <div class="grid grid-cols-1 md:grid-cols-5 gap-3 text-xs">
+            <div class="p-3.5 bg-cream-100 rounded-xl border border-cream-300 space-y-1.5">
+              <div class="flex items-center gap-1.5 text-sage-800 font-semibold">
+                <i data-lucide="eye" class="w-3.5 h-3.5 text-sage-600"></i> 1. Monitoring
+              </div>
+              <p class="text-slate-600">Scans CPU &amp; RAM across VMs. Flags idle machines (&lt;10% CPU &gt;90% time) and over-provisioned boxes.</p>
+            </div>
+            <div class="p-3.5 bg-cream-100 rounded-xl border border-cream-300 space-y-1.5">
+              <div class="flex items-center gap-1.5 text-blue-800 font-semibold">
+                <i data-lucide="line-chart" class="w-3.5 h-3.5 text-blue-600"></i> 2. Forecaster
+              </div>
+              <p class="text-slate-600">Supervised Random Forest with 24h lag features. Predicts upcoming demand cycles with low RMSE.</p>
+            </div>
+            <div class="p-3.5 bg-cream-100 rounded-xl border border-cream-300 space-y-1.5">
+              <div class="flex items-center gap-1.5 text-amber-800 font-semibold">
+                <i data-lucide="cpu" class="w-3.5 h-3.5 text-amber-600"></i> 3. Optimizer
+              </div>
+              <p class="text-slate-600">Q-Learning RL agent in state space (load, forecast, servers). Minimizes compute bill while guarding SLA.</p>
+            </div>
+            <div class="p-3.5 bg-cream-100 rounded-xl border border-cream-300 space-y-1.5">
+              <div class="flex items-center gap-1.5 text-emerald-800 font-semibold">
+                <i data-lucide="box" class="w-3.5 h-3.5 text-emerald-600"></i> 4. Deployment
+              </div>
+              <p class="text-slate-600">Enforces safety clamping (1-10 replicas, max &plusmn;1 delta). Generates Terraform IaC &amp; kubectl commands.</p>
+            </div>
+            <div class="p-3.5 bg-cream-100 rounded-xl border border-cream-300 space-y-1.5">
+              <div class="flex items-center gap-1.5 text-purple-800 font-semibold">
+                <i data-lucide="file-text" class="w-3.5 h-3.5 text-purple-600"></i> 5. Audit &amp; Explain
+              </div>
+              <p class="text-slate-600">Creates structured CSV audit logs and readable natural language explanations for enterprise compliance.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: FLEET USAGE & RIGHTSISTING -->
+      <section id="view-usage" class="tab-view space-y-6 hidden">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h3 class="text-xl font-bold text-slate-900">Cloud Fleet Usage &amp; Rightsizing Telemetry</h3>
+            <p class="text-xs text-slate-500">Monitoring Agent classification of compute instances</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <input type="text" id="vm-search" oninput="filterVmTable()" placeholder="Search VM ID or Status..." class="bg-white border border-cream-300 text-xs text-slate-900 rounded-xl px-3.5 py-2 focus:ring-2 focus:ring-sage-500 outline-none w-64 shadow-sm">
+          </div>
+        </div>
+
+        <!-- Histogram & Rules Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="card-beige p-6 rounded-2xl lg:col-span-2">
+            <h4 class="font-bold text-slate-900 text-sm mb-1">Average CPU Utilization Distribution</h4>
+            <p class="text-xs text-slate-500 mb-3">Red bar indicates the 0-10% idle instance threshold</p>
+            <div class="h-64">
+              <canvas id="vmCpuHistogram"></canvas>
+            </div>
+          </div>
+
+          <div class="card-beige p-6 rounded-2xl flex flex-col justify-between">
+            <div>
+              <h4 class="font-bold text-slate-900 text-sm mb-3">Rightsizing Decision Rules</h4>
+              <div class="space-y-3 text-xs text-slate-600">
+                <div class="p-3.5 bg-rose-50 border border-rose-200 rounded-xl">
+                  <p class="font-semibold text-rose-800 flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-rose-500"></span> Idle Detection Heuristic
+                  </p>
+                  <p class="mt-1 text-slate-600">VM CPU &lt; 10% for &gt; 90% of hours. Action: <strong>Decommission or hibernate instance</strong>.</p>
+                </div>
+                <div class="p-3.5 bg-amber-50 border border-amber-200 rounded-xl">
+                  <p class="font-semibold text-amber-800 flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-amber-500"></span> Over-Provisioned Heuristic
+                  </p>
+                  <p class="mt-1 text-slate-600">Peak CPU &lt; 40%. Action: <strong>Downsize instance family by 50%</strong>.</p>
+                </div>
+              </div>
+            </div>
+            <div class="text-xs text-slate-600 p-3 bg-cream-100 rounded-xl border border-cream-300 mt-4">
+              Estimated fleet waste savings potential: <span class="text-sage-700 font-bold" id="waste-potential-text">$3,064.32</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- VM Table -->
+        <div class="card-beige rounded-2xl overflow-hidden">
+          <div class="px-6 py-4 border-b border-cream-300 flex justify-between items-center bg-cream-100/60">
+            <h4 class="font-bold text-slate-900 text-sm">Monitored Cloud Instances (<span id="vm-count-badge">25</span>)</h4>
+          </div>
+          <div class="overflow-x-auto max-h-[460px] overflow-y-auto">
+            <table class="w-full text-left text-xs text-slate-700">
+              <thead class="bg-cream-100 sticky top-0 text-slate-500 uppercase tracking-wider font-semibold border-b border-cream-300">
+                <tr>
+                  <th class="px-4 py-3">VM ID</th>
+                  <th class="px-4 py-3">Avg CPU %</th>
+                  <th class="px-4 py-3">Min CPU %</th>
+                  <th class="px-4 py-3">Peak CPU %</th>
+                  <th class="px-4 py-3">% Time &lt; 10%</th>
+                  <th class="px-4 py-3">Total Cost ($)</th>
+                  <th class="px-4 py-3">Est. Waste ($)</th>
+                  <th class="px-4 py-3">Status</th>
+                </tr>
+              </thead>
+              <tbody id="vm-table-body" class="divide-y divide-cream-200">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: DEMAND FORECASTING -->
+      <section id="view-forecast" class="tab-view space-y-6 hidden">
+        <div>
+          <h3 class="text-xl font-bold text-slate-900">Workload Demand Forecasting Engine</h3>
+          <p class="text-xs text-slate-500">Proactive machine learning forecasting vs statistical baselines</p>
+        </div>
+
+        <!-- Accuracy KPI Badges -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4" id="forecast-kpi-cards">
+          <div class="card-beige p-5 rounded-2xl">
+            <p class="text-xs text-slate-500 uppercase font-semibold">Random Forest RMSE</p>
+            <h4 id="rf-rmse-val" class="text-2xl font-bold text-sage-700 mt-1">33.57</h4>
+            <p class="text-xs text-slate-500 mt-0.5">Root Mean Squared Error</p>
+          </div>
+          <div class="card-beige p-5 rounded-2xl">
+            <p class="text-xs text-slate-500 uppercase font-semibold">Random Forest MAPE</p>
+            <h4 id="rf-mape-val" class="text-2xl font-bold text-sage-700 mt-1">4.85%</h4>
+            <p class="text-xs text-slate-500 mt-0.5">Mean Absolute Percentage Error</p>
+          </div>
+          <div class="card-beige p-5 rounded-2xl">
+            <p class="text-xs text-slate-500 uppercase font-semibold">Baseline Outperformance</p>
+            <h4 class="text-2xl font-bold text-slate-900 mt-1">Beats 3h MA</h4>
+            <p class="text-xs text-emerald-600 font-medium mt-0.5">63% lower error than moving average</p>
+          </div>
+        </div>
+
+        <!-- Forecast Line Chart -->
+        <div class="card-beige p-6 rounded-2xl">
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div>
+              <h4 class="font-bold text-slate-900 text-base">Actual vs Predicted Demand Curve</h4>
+              <p class="text-xs text-slate-500">Continuous test timeline comparing actual load to ML predictions</p>
+            </div>
+            <div class="flex items-center gap-4 text-xs font-semibold">
+              <span class="flex items-center gap-1.5"><span class="w-3 h-1 bg-blue-600 rounded"></span> Actual</span>
+              <span class="flex items-center gap-1.5"><span class="w-3 h-1 bg-sage-600 rounded"></span> ML Forecast</span>
+            </div>
+          </div>
+          <div class="h-80">
+            <canvas id="forecastChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Model Comparison Table -->
+        <div class="card-beige rounded-2xl overflow-hidden">
+          <div class="px-6 py-4 border-b border-cream-300 bg-cream-100/60">
+            <h4 class="font-bold text-slate-900 text-sm">Forecasting Model Accuracy Comparison</h4>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-700">
+              <thead class="bg-cream-100 text-slate-500 uppercase tracking-wider font-semibold border-b border-cream-300">
+                <tr>
+                  <th class="px-5 py-3">Model Architecture</th>
+                  <th class="px-5 py-3">RMSE</th>
+                  <th class="px-5 py-3">MAE</th>
+                  <th class="px-5 py-3">MAPE (%)</th>
+                  <th class="px-5 py-3">Beats Baseline?</th>
+                </tr>
+              </thead>
+              <tbody id="forecast-metrics-body" class="divide-y divide-cream-200">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: DECISIONS & AUDIT -->
+      <section id="view-decisions" class="tab-view space-y-6 hidden">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h3 class="text-xl font-bold text-slate-900">Autonomous Scaling Audit Trail</h3>
+            <p class="text-xs text-slate-500">Tamper-evident log of scaling actions with human-readable explanations</p>
+          </div>
+          <div class="flex items-center gap-2 text-xs font-semibold">
+            <span class="px-2.5 py-1 rounded-lg bg-sage-100 text-sage-800 border border-sage-200">ADD +1</span>
+            <span class="px-2.5 py-1 rounded-lg bg-rose-100 text-rose-800 border border-rose-200">REMOVE -1</span>
+            <span class="px-2.5 py-1 rounded-lg bg-cream-200 text-slate-700 border border-cream-300">HOLD</span>
+          </div>
+        </div>
+
+        <!-- Decisions Table -->
+        <div class="card-beige rounded-2xl overflow-hidden">
+          <div class="overflow-x-auto max-h-[580px] overflow-y-auto">
+            <table class="w-full text-left text-xs text-slate-700">
+              <thead class="bg-cream-100 sticky top-0 text-slate-500 uppercase tracking-wider font-semibold border-b border-cream-300">
+                <tr>
+                  <th class="px-4 py-3">Timestamp</th>
+                  <th class="px-4 py-3">Demand</th>
+                  <th class="px-4 py-3">Forecast</th>
+                  <th class="px-4 py-3">Replicas</th>
+                  <th class="px-4 py-3">Action</th>
+                  <th class="px-4 py-3">Cost &Delta;</th>
+                  <th class="px-4 py-3">SLA Risk</th>
+                  <th class="px-4 py-3 w-1/2">Plain-English Audit Explanation</th>
+                </tr>
+              </thead>
+              <tbody id="decisions-table-body" class="divide-y divide-cream-200">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 5: EVALUATION -->
+      <section id="view-evaluation" class="tab-view space-y-6 hidden">
+        <div>
+          <h3 class="text-xl font-bold text-slate-900">Autoscaling Benchmark &amp; Strategy Evaluation</h3>
+          <p class="text-xs text-slate-500">Head-to-head comparison of Static, Reactive Threshold, and Q-Learning RL</p>
+        </div>
+
+        <!-- Benchmark Table -->
+        <div class="card-beige rounded-2xl overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs sm:text-sm text-slate-700">
+              <thead class="bg-cream-100 text-slate-500 uppercase tracking-wider font-semibold border-b border-cream-300">
+                <tr>
+                  <th class="px-5 py-3.5">Scaling Strategy</th>
+                  <th class="px-5 py-3.5">Total Cost ($)</th>
+                  <th class="px-5 py-3.5">SLA Violations</th>
+                  <th class="px-5 py-3.5">SLA Compliance (%)</th>
+                  <th class="px-5 py-3.5">Avg Utilization (%)</th>
+                  <th class="px-5 py-3.5">Cost Reduction (%)</th>
+                </tr>
+              </thead>
+              <tbody id="evaluation-table-body" class="divide-y divide-cream-200 font-medium">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Evaluation Dual Charts -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="card-beige p-6 rounded-2xl">
+            <h4 class="font-bold text-slate-900 text-sm mb-1">Total Cost Benchmark ($)</h4>
+            <p class="text-xs text-slate-500 mb-4">Lower is better. Demonstrates autonomous savings.</p>
+            <div class="h-64">
+              <canvas id="evalCostChart"></canvas>
+            </div>
+          </div>
+          <div class="card-beige p-6 rounded-2xl">
+            <h4 class="font-bold text-slate-900 text-sm mb-1">SLA Violations Count</h4>
+            <p class="text-xs text-slate-500 mb-4">Lower is better. Demonstrates performance reliability.</p>
+            <div class="h-64">
+              <canvas id="evalViolationsChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 6: IAC DEPLOYMENT -->
+      <section id="view-deployment" class="tab-view space-y-6 hidden">
+        <div>
+          <h3 class="text-xl font-bold text-slate-900">Infrastructure-as-Code &amp; Kubernetes Deployment</h3>
+          <p class="text-xs text-slate-500">Automated Terraform HCL and Kubernetes manifest generation</p>
+        </div>
+
+        <!-- Safety Rules Card -->
+        <div class="p-5 bg-sage-50 border border-sage-200 rounded-2xl text-xs space-y-2">
+          <div class="flex items-center gap-2 text-sage-900 font-bold text-sm">
+            <i data-lucide="shield-alert" class="w-5 h-5 text-sage-600"></i> Deployment Agent Safety Invariants Enforced
+          </div>
+          <ul class="grid grid-cols-1 md:grid-cols-3 gap-3 text-slate-700">
+            <li class="flex items-center gap-2 font-medium"><i data-lucide="check-circle-2" class="w-4 h-4 text-sage-600"></i> Server bounds: 1 &le; N &le; 10 replicas</li>
+            <li class="flex items-center gap-2 font-medium"><i data-lucide="check-circle-2" class="w-4 h-4 text-sage-600"></i> Rate limiter: Max &plusmn;1 server change per step</li>
+            <li class="flex items-center gap-2 font-medium"><i data-lucide="check-circle-2" class="w-4 h-4 text-sage-600"></i> Dry-run execution mode active by default</li>
+          </ul>
+        </div>
+
+        <!-- Code Snippets Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          
+          <!-- Terraform tfvars -->
+          <div class="card-beige p-6 rounded-2xl flex flex-col">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-mono text-sage-800 font-semibold flex items-center gap-1.5">
+                <i data-lucide="file-code" class="w-4 h-4 text-sage-600"></i> outputs/terraform/terraform.tfvars
+              </span>
+              <button onclick="copyCode('tfvars-code')" class="text-xs text-slate-600 hover:text-slate-900 px-2.5 py-1 bg-cream-200 hover:bg-cream-300 rounded-lg transition font-semibold">Copy</button>
+            </div>
+            <pre id="tfvars-code" class="bg-cream-100 p-4 rounded-xl text-xs font-mono text-slate-800 overflow-x-auto flex-1 border border-cream-300"># Loading...</pre>
+          </div>
+
+          <!-- Terraform variables.tf -->
+          <div class="card-beige p-6 rounded-2xl flex flex-col">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-mono text-sage-800 font-semibold flex items-center gap-1.5">
+                <i data-lucide="file-code" class="w-4 h-4 text-sage-600"></i> outputs/terraform/variables.tf
+              </span>
+              <button onclick="copyCode('variables-code')" class="text-xs text-slate-600 hover:text-slate-900 px-2.5 py-1 bg-cream-200 hover:bg-cream-300 rounded-lg transition font-semibold">Copy</button>
+            </div>
+            <pre id="variables-code" class="bg-cream-100 p-4 rounded-xl text-xs font-mono text-slate-800 overflow-x-auto flex-1 border border-cream-300"># Loading...</pre>
+          </div>
+
+          <!-- Kubernetes deployment.yaml -->
+          <div class="card-beige p-6 rounded-2xl flex flex-col lg:col-span-2">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-mono text-sage-800 font-semibold flex items-center gap-1.5">
+                <i data-lucide="box" class="w-4 h-4 text-sage-600"></i> outputs/terraform/deployment.yaml (Kubernetes)
+              </span>
+              <button onclick="copyCode('k8s-code')" class="text-xs text-slate-600 hover:text-slate-900 px-2.5 py-1 bg-cream-200 hover:bg-cream-300 rounded-lg transition font-semibold">Copy</button>
+            </div>
+            <pre id="k8s-code" class="bg-cream-100 p-4 rounded-xl text-xs font-mono text-slate-800 overflow-x-auto h-48 border border-cream-300"># Loading...</pre>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- TAB 7: LIVE SIMULATOR -->
+      <section id="view-simulator" class="tab-view space-y-6 hidden">
+        <div>
+          <h3 class="text-xl font-bold text-slate-900">Interactive Scaling Decision Simulator</h3>
+          <p class="text-xs text-slate-500">Viva &amp; Demonstration Sandbox: Test custom load scenarios and observe real-time agent reactions</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          <!-- Interactive Controls -->
+          <div class="card-beige p-6 rounded-2xl space-y-4">
+            <h4 class="font-bold text-slate-900 text-sm mb-3">Input Simulation Parameters</h4>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Current Active Servers (1-10)</label>
+              <input type="number" id="sim-servers" value="3" min="1" max="10" class="w-full bg-cream-50 border border-cream-300 rounded-xl p-2.5 text-sm text-slate-900 focus:ring-2 focus:ring-sage-500 outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Current Observed Demand (Units)</label>
+              <input type="number" id="sim-demand" value="280" min="0" step="10" class="w-full bg-cream-50 border border-cream-300 rounded-xl p-2.5 text-sm text-slate-900 focus:ring-2 focus:ring-sage-500 outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Forecasted Next-Hour Demand (Units)</label>
+              <input type="number" id="sim-forecast" value="360" min="0" step="10" class="w-full bg-cream-50 border border-cream-300 rounded-xl p-2.5 text-sm text-slate-900 focus:ring-2 focus:ring-sage-500 outline-none">
+            </div>
+            <div class="grid grid-cols-2 gap-3 text-xs">
+              <div>
+                <label class="block font-semibold text-slate-500 mb-1">Server Capacity</label>
+                <input type="number" id="sim-capacity" value="100" readonly class="w-full bg-cream-100 border border-cream-300 rounded-lg p-2 text-slate-600 font-mono">
+              </div>
+              <div>
+                <label class="block font-semibold text-slate-500 mb-1">Hourly Price ($)</label>
+                <input type="number" id="sim-price" value="1.0" readonly class="w-full bg-cream-100 border border-cream-300 rounded-lg p-2 text-slate-600 font-mono">
+              </div>
+            </div>
+            <button onclick="runInteractiveStep()" class="w-full py-3 bg-sage-600 hover:bg-sage-700 text-white rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 shadow-sm glow-sage">
+              <i data-lucide="play" class="w-4 h-4"></i> Run Agent Decision Step
+            </button>
+          </div>
+
+          <!-- Simulation Result Output -->
+          <div class="lg:col-span-2 card-beige p-6 rounded-2xl flex flex-col justify-between">
+            <div>
+              <h4 class="font-bold text-slate-900 text-sm mb-3">Agent Reaction &amp; Safety Verification</h4>
+              <div id="sim-result-box" class="space-y-4">
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+                  <div class="p-3.5 bg-cream-100 rounded-xl border border-cream-300">
+                    <span class="block text-xs text-slate-500 font-medium">Action</span>
+                    <span id="sim-out-action" class="font-bold text-sage-700 text-base uppercase">--</span>
+                  </div>
+                  <div class="p-3.5 bg-cream-100 rounded-xl border border-cream-300">
+                    <span class="block text-xs text-slate-500 font-medium">Scaled Replicas</span>
+                    <span id="sim-out-servers" class="font-bold text-slate-900 text-base">--</span>
+                  </div>
+                  <div class="p-3.5 bg-cream-100 rounded-xl border border-cream-300">
+                    <span class="block text-xs text-slate-500 font-medium">Cluster Capacity</span>
+                    <span id="sim-out-capacity" class="font-bold text-blue-700 text-base">--</span>
+                  </div>
+                  <div class="p-3.5 bg-cream-100 rounded-xl border border-cream-300">
+                    <span class="block text-xs text-slate-500 font-medium">Projected Util %</span>
+                    <span id="sim-out-util" class="font-bold text-amber-700 text-base">--</span>
+                  </div>
+                </div>
+
+                <!-- Explanation badge -->
+                <div class="p-4 bg-sage-50 border border-sage-200 rounded-xl space-y-1">
+                  <div class="text-xs font-semibold text-sage-800 flex items-center gap-1.5">
+                    <i data-lucide="sparkles" class="w-4 h-4 text-sage-600"></i> Audit &amp; Explainability Agent Rationale
+                  </div>
+                  <p id="sim-out-explanation" class="text-xs text-slate-700 leading-relaxed font-normal">
+                    Adjust inputs and click "Run Agent Decision Step" to observe autonomous reasoning.
+                  </p>
+                </div>
+
+                <!-- Deployment preview -->
+                <div class="p-3.5 bg-cream-100 rounded-xl border border-cream-300 text-xs font-mono">
+                  <span class="text-slate-500 block mb-1 font-sans font-medium text-[11px]">Generated Execution Command:</span>
+                  <code id="sim-out-cmd" class="text-sage-800 font-semibold">kubectl scale deployment cloud-worker-deployment --replicas=...</code>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-t border-cream-200 text-xs text-slate-500 flex items-center gap-2 font-medium">
+              <i data-lucide="check" class="w-4 h-4 text-sage-600"></i>
+              <span>Safety status: <strong id="sim-out-safety" class="text-slate-800">Awaiting input</strong></span>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+
+  </div>
+
+  <!-- GLOBAL FOOTER -->
+  <footer class="border-t border-cream-300 bg-cream-100 px-4 py-4 text-center text-xs text-slate-500">
+    Autonomous Cloud Cost &amp; Performance Optimizer &bull; Team XOXO (T-09) &bull; Built with FastAPI &bull; Vanilla JS &bull; Chart.js &bull; Tailwind CSS
   </footer>
 
-  <!-- Application Logic & Chart.js Controllers -->
+  <!-- ========================================================================= -->
+  <!-- JAVASCRIPT LOGIC -->
+  <!-- ========================================================================= -->
   <script>
-    // Universal API Address (easily configurable for production Render/Vercel)
     const API = window.location.origin;
-
-    // Charts instances
     let charts = {};
     let cachedVmData = [];
+    let currentAuthMode = 'login';
 
-    // Switch Tabs
+    // Navigation Router (landing | auth | console)
+    function navigateTo(page) {
+      document.querySelectorAll('.page-container').forEach(el => el.classList.add('hidden'));
+      const target = document.getElementById(`page-${page}`);
+      if (target) target.classList.remove('hidden');
+
+      const landingNav = document.getElementById('landing-nav');
+      const consoleNav = document.getElementById('console-tabs-nav');
+
+      if (page === 'console') {
+        landingNav.classList.add('hidden');
+        landingNav.classList.remove('md:flex');
+        consoleNav.classList.remove('hidden');
+        consoleNav.classList.add('flex');
+        loadAllData();
+      } else if (page === 'landing') {
+        landingNav.classList.remove('hidden');
+        landingNav.classList.add('md:flex');
+        consoleNav.classList.add('hidden');
+        consoleNav.classList.remove('flex');
+      } else {
+        // auth page
+        landingNav.classList.add('hidden');
+        landingNav.classList.remove('md:flex');
+        consoleNav.classList.add('hidden');
+        consoleNav.classList.remove('flex');
+      }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      lucide.createIcons();
+    }
+
+    function launchConsole(targetTab = 'overview') {
+      navigateTo('console');
+      if (targetTab) switchTab(targetTab);
+    }
+
+    function quickTestSimulator() {
+      launchConsole('simulator');
+      setTimeout(() => {
+        runInteractiveStep();
+      }, 400);
+    }
+
+    // Switch Console Tabs
     function switchTab(tabId) {
       document.querySelectorAll('.tab-view').forEach(el => el.classList.add('hidden'));
       document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('bg-indigo-600', 'text-white');
-        btn.classList.add('text-slate-400');
+        if (!btn.id.includes('simulator')) {
+          btn.classList.remove('bg-sage-600', 'text-white', 'shadow-sm');
+          btn.classList.add('text-slate-600');
+        }
       });
 
       const targetView = document.getElementById(`view-${tabId}`);
       const targetBtn = document.getElementById(`tab-${tabId}`);
       if (targetView) targetView.classList.remove('hidden');
-      if (targetBtn) {
-        targetBtn.classList.remove('text-slate-400');
-        targetBtn.classList.add('bg-indigo-600', 'text-white');
+      if (targetBtn && !tabId.includes('simulator')) {
+        targetBtn.classList.remove('text-slate-600');
+        targetBtn.classList.add('bg-sage-600', 'text-white', 'shadow-sm');
       }
 
-      // Re-render chart sizes if needed
       window.dispatchEvent(new Event('resize'));
     }
 
-    // Copy helper
+    // Auth Mode: login vs register
+    function setAuthMode(mode) {
+      currentAuthMode = mode;
+      const btnLogin = document.getElementById('btn-auth-tab-login');
+      const btnRegister = document.getElementById('btn-auth-tab-register');
+      const fieldName = document.getElementById('field-name');
+      const fieldRole = document.getElementById('field-role');
+      const title = document.getElementById('auth-title');
+      const btnLabel = document.getElementById('auth-btn-label');
+
+      if (mode === 'login') {
+        btnLogin.classList.add('bg-white', 'text-slate-900', 'shadow-sm');
+        btnLogin.classList.remove('text-slate-500');
+        btnRegister.classList.remove('bg-white', 'text-slate-900', 'shadow-sm');
+        btnRegister.classList.add('text-slate-500');
+        fieldName.classList.add('hidden');
+        fieldRole.classList.add('hidden');
+        title.innerText = 'Sign in to CloudOptimizer';
+        btnLabel.innerText = 'Sign In to Dashboard';
+      } else {
+        btnRegister.classList.add('bg-white', 'text-slate-900', 'shadow-sm');
+        btnRegister.classList.remove('text-slate-500');
+        btnLogin.classList.remove('bg-white', 'text-slate-900', 'shadow-sm');
+        btnLogin.classList.add('text-slate-500');
+        fieldName.classList.remove('hidden');
+        fieldRole.classList.remove('hidden');
+        title.innerText = 'Create Operator Account';
+        btnLabel.innerText = 'Register & Enter Console';
+      }
+    }
+
+    function fillDemoCredentials() {
+      document.getElementById('auth-email').value = 'admin@cloudopt.ai';
+      document.getElementById('auth-password').value = 'demo123';
+      document.getElementById('auth-name').value = 'Lead Cloud Architect';
+      setAuthMode('login');
+    }
+
+    async function handleAuthSubmit(event) {
+      event.preventDefault();
+      const email = document.getElementById('auth-email').value;
+      const password = document.getElementById('auth-password').value;
+      const name = document.getElementById('auth-name').value || 'Cloud Operator';
+      const role = document.getElementById('auth-role').value || 'Lead DevOps';
+      const errorMsg = document.getElementById('auth-error-msg');
+      errorMsg.classList.add('hidden');
+
+      try {
+        const endpoint = currentAuthMode === 'login' ? '/api/auth/login' : '/api/auth/register';
+        const payload = currentAuthMode === 'login' ? { email, password } : { name, email, password, role };
+
+        const res = await fetch(`${API}${endpoint}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.detail || 'Authentication failed');
+        }
+
+        const data = await res.json();
+        // Save user session
+        localStorage.setItem('cloud_opt_user', JSON.stringify(data.user));
+        updateAuthState(data.user);
+        launchConsole('overview');
+      } catch (err) {
+        errorMsg.innerText = err.message;
+        errorMsg.classList.remove('hidden');
+      }
+    }
+
+    function updateAuthState(user) {
+      const unlogged = document.getElementById('auth-buttons-unlogged');
+      const logged = document.getElementById('auth-profile-logged');
+
+      if (user) {
+        unlogged.classList.add('hidden');
+        logged.classList.remove('hidden');
+        logged.classList.add('flex');
+        document.getElementById('user-display-name').innerText = user.name || 'Cloud Architect';
+        document.getElementById('user-display-role').innerText = user.role || 'DevOps';
+
+        const initials = (user.name || 'CA').split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+        document.getElementById('user-avatar-initials').innerText = initials;
+      } else {
+        unlogged.classList.remove('hidden');
+        logged.classList.add('hidden');
+        logged.classList.remove('flex');
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('cloud_opt_user');
+      updateAuthState(null);
+      navigateTo('landing');
+    }
+
     function copyCode(elementId) {
       const text = document.getElementById(elementId).innerText;
       navigator.clipboard.writeText(text);
-      alert('Copied to clipboard!');
+      alert('Copied configuration to clipboard!');
     }
 
-    // Load All Data from FastAPI
+    // Load All Data from FastAPI Backend
     async function loadAllData() {
       const spinner = document.getElementById('loading-spinner');
-      const refreshIcon = document.getElementById('refresh-icon');
-      spinner.classList.remove('hidden');
-      refreshIcon.classList.add('animate-spin');
+      if (spinner) spinner.classList.remove('hidden');
 
       try {
         await Promise.all([
@@ -697,15 +1345,14 @@
           loadConfig(),
         ]);
       } catch (err) {
-        console.error('Error fetching data from API:', err);
+        console.error('API Error:', err);
       } finally {
-        spinner.classList.add('hidden');
-        refreshIcon.classList.remove('animate-spin');
+        if (spinner) spinner.classList.add('hidden');
         lucide.createIcons();
       }
     }
 
-    // 1. Load Overview
+    // 1. Overview
     async function loadOverview() {
       const res = await fetch(`${API}/api/overview`);
       const data = await res.json();
@@ -715,16 +1362,16 @@
       document.getElementById('kpi-savings-bar').style.width = `${Math.min(100, data.cost_savings_pct || 0)}%`;
 
       document.getElementById('kpi-sla-compliance').innerText = `${data.sla_compliance_pct || 100}%`;
-      document.getElementById('kpi-sla-violations').innerText = `${data.sla_violations || 0} Breach Events`;
+      document.getElementById('kpi-sla-violations').innerText = `${data.sla_violations || 0} Breach Event`;
       document.getElementById('kpi-sla-bar').style.width = `${data.sla_compliance_pct || 100}%`;
 
       document.getElementById('kpi-idle-vms').innerText = `${data.idle_vms_detected || 0} VMs`;
-      document.getElementById('kpi-idle-waste-usd').innerText = `$${data.fleet_waste_usd || 0} detected waste`;
+      document.getElementById('kpi-idle-waste-usd').innerText = `$${(data.fleet_waste_usd || 0).toLocaleString()} fleet waste`;
 
       document.getElementById('kpi-active-servers').innerText = `${data.latest_servers || 3} Replicas`;
     }
 
-    // 2. Load Usage & Fleet Data
+    // 2. Usage & Fleet
     async function loadUsage() {
       const res = await fetch(`${API}/api/usage`);
       const data = await res.json();
@@ -743,7 +1390,7 @@
       document.getElementById('donut-optimal-cnt').innerText = optimal;
       document.getElementById('donut-idle-cnt').innerText = idle;
       document.getElementById('donut-overprov-cnt').innerText = overprov;
-      document.getElementById('waste-potential-text').innerText = `$${totalWaste.toFixed(2)}`;
+      document.getElementById('waste-potential-text').innerText = `$${totalWaste.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
 
       renderVmTable(data);
       renderOverviewDonut(optimal, idle, overprov);
@@ -756,26 +1403,26 @@
 
       vms.forEach(vm => {
         const tr = document.createElement('tr');
-        tr.className = 'hover:bg-slate-800/40 transition';
+        tr.className = 'hover:bg-cream-50/70 transition';
 
         let statusBadge = '';
         if (vm.status === 'OPTIMAL') {
-          statusBadge = '<span class="px-2 py-0.5 rounded-full text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 font-medium">Optimal</span>';
+          statusBadge = '<span class="px-2.5 py-1 rounded-full text-sage-800 bg-sage-100 border border-sage-200 font-semibold">Optimal</span>';
         } else if (vm.status === 'IDLE') {
-          statusBadge = '<span class="px-2 py-0.5 rounded-full text-rose-400 bg-rose-500/10 border border-rose-500/20 font-medium">Idle</span>';
+          statusBadge = '<span class="px-2.5 py-1 rounded-full text-rose-800 bg-rose-100 border border-rose-200 font-semibold">Idle</span>';
         } else {
-          statusBadge = '<span class="px-2 py-0.5 rounded-full text-amber-400 bg-amber-500/10 border border-amber-500/20 font-medium">Over-Prov</span>';
+          statusBadge = '<span class="px-2.5 py-1 rounded-full text-amber-800 bg-amber-100 border border-amber-200 font-semibold">Over-Prov</span>';
         }
 
         tr.innerHTML = `
-          <td class="px-4 py-2.5 font-mono text-white">${vm.vm_id}</td>
-          <td class="px-4 py-2.5">${vm.avg_cpu}%</td>
-          <td class="px-4 py-2.5">${vm.min_cpu}%</td>
-          <td class="px-4 py-2.5">${vm.peak_cpu}%</td>
-          <td class="px-4 py-2.5">${vm.pct_low}%</td>
-          <td class="px-4 py-2.5 font-mono">$${vm.total_cost}</td>
-          <td class="px-4 py-2.5 font-mono text-rose-400">$${vm.estimated_waste}</td>
-          <td class="px-4 py-2.5">${statusBadge}</td>
+          <td class="px-4 py-3 font-mono font-bold text-slate-900">${vm.vm_id}</td>
+          <td class="px-4 py-3">${vm.avg_cpu}%</td>
+          <td class="px-4 py-3">${vm.min_cpu}%</td>
+          <td class="px-4 py-3">${vm.peak_cpu}%</td>
+          <td class="px-4 py-3 font-mono">${vm.pct_low}%</td>
+          <td class="px-4 py-3 font-mono">$${vm.total_cost}</td>
+          <td class="px-4 py-3 font-mono text-rose-700 font-bold">$${vm.estimated_waste}</td>
+          <td class="px-4 py-3">${statusBadge}</td>
         `;
         tbody.appendChild(tr);
       });
@@ -798,17 +1445,16 @@
           labels: ['Optimal', 'Idle', 'Over-provisioned'],
           datasets: [{
             data: [optimal, idle, overprov],
-            backgroundColor: ['#10b981', '#ef4444', '#f59e0b'],
-            borderWidth: 0,
+            backgroundColor: ['#10b981', '#f43f5e', '#f59e0b'],
+            borderWidth: 2,
+            borderColor: '#ffffff',
           }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false }
-          },
-          cutout: '70%'
+          plugins: { legend: { display: false } },
+          cutout: '72%'
         }
       });
     }
@@ -837,7 +1483,7 @@
           datasets: [{
             label: 'VM Count',
             data: counts,
-            backgroundColor: labels.map((_, i) => i === 0 ? '#ef4444' : '#6366f1'),
+            backgroundColor: labels.map((_, i) => i === 0 ? '#f43f5e' : '#10b981'),
             borderRadius: 6,
           }]
         },
@@ -846,14 +1492,14 @@
           maintainAspectRatio: false,
           plugins: { legend: { display: false } },
           scales: {
-            y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
-            x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+            y: { grid: { color: '#f1ede4' }, ticks: { color: '#64748b' } },
+            x: { grid: { display: false }, ticks: { color: '#64748b' } }
           }
         }
       });
     }
 
-    // 3. Load Demand Forecast
+    // 3. Demand Forecast
     async function loadForecast() {
       const res = await fetch(`${API}/api/forecast?limit=120`);
       const data = await res.json();
@@ -861,29 +1507,26 @@
       const metricsRes = await fetch(`${API}/api/forecast/metrics`);
       const metricsData = await metricsRes.json();
 
-      // Metrics cards
       const rf = metricsData.find(m => m.model.includes('Random Forest')) || metricsData[0] || {};
       document.getElementById('rf-rmse-val').innerText = rf.rmse || '--';
       document.getElementById('rf-mape-val').innerText = `${rf.mape_percent || '--'}%`;
 
-      // Metrics Table
       const mBody = document.getElementById('forecast-metrics-body');
       mBody.innerHTML = '';
       metricsData.forEach(m => {
         const tr = document.createElement('tr');
-        tr.className = 'hover:bg-slate-800/40';
-        const beatTag = m.beats_baseline ? '<span class="text-emerald-400 font-bold">Yes (Beats MA)</span>' : '<span class="text-slate-400">Baseline</span>';
+        tr.className = 'hover:bg-cream-50/70';
+        const beatTag = m.beats_baseline ? '<span class="text-sage-700 font-bold flex items-center gap-1">&#10003; Yes (Beats MA)</span>' : '<span class="text-slate-400">Baseline</span>';
         tr.innerHTML = `
-          <td class="px-4 py-2.5 font-medium text-white">${m.model}</td>
-          <td class="px-4 py-2.5 font-mono text-indigo-300">${m.rmse}</td>
-          <td class="px-4 py-2.5 font-mono">${m.mae}</td>
-          <td class="px-4 py-2.5 font-mono">${m.mape_percent}%</td>
-          <td class="px-4 py-2.5">${beatTag}</td>
+          <td class="px-5 py-3 font-semibold text-slate-900">${m.model}</td>
+          <td class="px-5 py-3 font-mono text-sage-800 font-bold">${m.rmse}</td>
+          <td class="px-5 py-3 font-mono">${m.mae}</td>
+          <td class="px-5 py-3 font-mono">${m.mape_percent}%</td>
+          <td class="px-5 py-3">${beatTag}</td>
         `;
         mBody.appendChild(tr);
       });
 
-      // Forecast Line Chart
       if (charts.forecast) charts.forecast.destroy();
       const ctx = document.getElementById('forecastChart').getContext('2d');
       charts.forecast = new Chart(ctx, {
@@ -894,8 +1537,8 @@
             {
               label: 'Actual Workload Demand',
               data: data.map(r => r.actual),
-              borderColor: '#3b82f6',
-              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+              borderColor: '#2563eb',
+              backgroundColor: 'rgba(37, 99, 235, 0.05)',
               borderWidth: 2,
               tension: 0.3,
               pointRadius: 1,
@@ -903,7 +1546,7 @@
             {
               label: 'Machine Learning Forecast',
               data: data.map(r => r.predicted),
-              borderColor: '#10b981',
+              borderColor: '#059669',
               backgroundColor: 'transparent',
               borderWidth: 2,
               borderDash: [4, 4],
@@ -917,25 +1560,25 @@
           maintainAspectRatio: false,
           interaction: { mode: 'index', intersect: false },
           plugins: {
-            legend: { labels: { color: '#cbd5e1' } }
+            legend: { labels: { color: '#334155', font: { weight: 'bold' } } }
           },
           scales: {
             y: {
-              grid: { color: '#334155' },
-              ticks: { color: '#94a3b8' },
-              title: { display: true, text: 'Demand Load Units', color: '#94a3b8' }
+              grid: { color: '#f1ede4' },
+              ticks: { color: '#64748b' },
+              title: { display: true, text: 'Demand Load Units', color: '#64748b' }
             },
             x: {
-              grid: { color: '#1e293b' },
-              ticks: { color: '#94a3b8', maxTicksLimit: 12 },
-              title: { display: true, text: 'Simulation Timeline (Hours)', color: '#94a3b8' }
+              grid: { display: false },
+              ticks: { color: '#64748b', maxTicksLimit: 14 },
+              title: { display: true, text: 'Simulation Timeline (Hours)', color: '#64748b' }
             }
           }
         }
       });
     }
 
-    // 4. Load Decisions & Audit Log
+    // 4. Decisions & Audit
     async function loadDecisions() {
       const res = await fetch(`${API}/api/decisions?limit=200`);
       const data = await res.json();
@@ -944,39 +1587,39 @@
 
       data.forEach(d => {
         const tr = document.createElement('tr');
-        tr.className = 'hover:bg-slate-800/40';
+        tr.className = 'hover:bg-cream-50/70';
 
         let actBadge = '';
         if (d.action === 'add') {
-          actBadge = '<span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold uppercase text-[10px]">ADD +1</span>';
+          actBadge = '<span class="px-2.5 py-1 rounded-md bg-sage-100 text-sage-800 border border-sage-300 font-bold uppercase text-[10px]">ADD +1</span>';
         } else if (d.action === 'remove') {
-          actBadge = '<span class="px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 font-bold uppercase text-[10px]">REMOVE -1</span>';
+          actBadge = '<span class="px-2.5 py-1 rounded-md bg-rose-100 text-rose-800 border border-rose-300 font-bold uppercase text-[10px]">REMOVE -1</span>';
         } else {
-          actBadge = '<span class="px-2 py-0.5 rounded bg-slate-700/50 text-slate-300 font-bold uppercase text-[10px]">HOLD</span>';
+          actBadge = '<span class="px-2.5 py-1 rounded-md bg-cream-200 text-slate-700 font-bold uppercase text-[10px]">HOLD</span>';
         }
 
         let riskBadge = '';
-        if (d.sla_risk === 'high') riskBadge = '<span class="text-rose-400 font-bold">HIGH</span>';
-        else if (d.sla_risk === 'moderate') riskBadge = '<span class="text-amber-400 font-bold">MODERATE</span>';
-        else riskBadge = '<span class="text-emerald-400 font-bold">LOW</span>';
+        if (d.sla_risk === 'high') riskBadge = '<span class="text-rose-600 font-bold">HIGH</span>';
+        else if (d.sla_risk === 'moderate') riskBadge = '<span class="text-amber-600 font-bold">MODERATE</span>';
+        else riskBadge = '<span class="text-sage-700 font-bold">LOW</span>';
 
         const costSign = d.cost_change > 0 ? `+$${d.cost_change}` : (d.cost_change < 0 ? `-$${Math.abs(d.cost_change)}` : '$0.00');
 
         tr.innerHTML = `
-          <td class="px-4 py-2.5 font-mono text-slate-400 whitespace-nowrap">${d.timestamp ? d.timestamp.substring(11, 19) || d.timestamp : '--'}</td>
-          <td class="px-4 py-2.5 font-mono">${d.demand}</td>
-          <td class="px-4 py-2.5 font-mono">${d.forecast}</td>
-          <td class="px-4 py-2.5 font-semibold text-white">${d.servers_before} &rarr; ${d.servers_after}</td>
-          <td class="px-4 py-2.5">${actBadge}</td>
-          <td class="px-4 py-2.5 font-mono">${costSign}</td>
-          <td class="px-4 py-2.5">${riskBadge}</td>
-          <td class="px-4 py-2.5 text-slate-200 leading-relaxed">${d.explanation || ''}</td>
+          <td class="px-4 py-3 font-mono text-slate-500 whitespace-nowrap">${d.timestamp ? d.timestamp.substring(11, 19) || d.timestamp : '--'}</td>
+          <td class="px-4 py-3 font-mono font-medium">${d.demand}</td>
+          <td class="px-4 py-3 font-mono font-medium">${d.forecast}</td>
+          <td class="px-4 py-3 font-semibold text-slate-900">${d.servers_before} &rarr; ${d.servers_after}</td>
+          <td class="px-4 py-3">${actBadge}</td>
+          <td class="px-4 py-3 font-mono">${costSign}</td>
+          <td class="px-4 py-3">${riskBadge}</td>
+          <td class="px-4 py-3 text-slate-700 leading-relaxed">${d.explanation || ''}</td>
         `;
         tbody.appendChild(tr);
       });
     }
 
-    // 5. Load Evaluation & Benchmark
+    // 5. Evaluation
     async function loadEvaluation() {
       const res = await fetch(`${API}/api/evaluation`);
       const data = await res.json();
@@ -985,25 +1628,24 @@
       tbody.innerHTML = '';
       data.forEach(row => {
         const tr = document.createElement('tr');
-        tr.className = 'hover:bg-slate-800/40';
+        tr.className = 'hover:bg-cream-50/70';
         const isRL = row.strategy.includes('Autonomous') || row.strategy.includes('RL');
-        if (isRL) tr.classList.add('bg-indigo-950/20');
+        if (isRL) tr.classList.add('bg-sage-50/70', 'font-bold');
 
         tr.innerHTML = `
-          <td class="px-5 py-3.5 text-white flex items-center gap-2">
-            ${isRL ? '<span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>' : ''}
+          <td class="px-5 py-3.5 text-slate-900 flex items-center gap-2">
+            ${isRL ? '<span class="w-2 h-2 rounded-full bg-sage-600 animate-ping"></span>' : ''}
             <strong>${row.strategy}</strong>
           </td>
-          <td class="px-5 py-3.5 font-mono text-indigo-300 font-bold">$${row.total_cost}</td>
-          <td class="px-5 py-3.5 font-mono ${row.sla_violations > 0 ? 'text-rose-400' : 'text-emerald-400'}">${row.sla_violations}</td>
+          <td class="px-5 py-3.5 font-mono text-sage-800 font-bold">$${row.total_cost}</td>
+          <td class="px-5 py-3.5 font-mono ${row.sla_violations > 0 ? 'text-rose-700 font-bold' : 'text-sage-700'}">${row.sla_violations}</td>
           <td class="px-5 py-3.5 font-mono">${row.sla_compliance_pct}%</td>
           <td class="px-5 py-3.5 font-mono">${row.avg_utilization_pct}%</td>
-          <td class="px-5 py-3.5 font-mono text-emerald-400 font-bold">${row.cost_savings_pct}%</td>
+          <td class="px-5 py-3.5 font-mono text-emerald-700 font-bold">${row.cost_savings_pct}%</td>
         `;
         tbody.appendChild(tr);
       });
 
-      // Render Comparison Bar Chart on Overview & Evaluation tabs
       renderEvaluationCharts(data);
     }
 
@@ -1022,19 +1664,17 @@
           datasets: [{
             label: 'Total Cost ($)',
             data: costs,
-            backgroundColor: ['#64748b', '#f59e0b', '#6366f1'],
+            backgroundColor: ['#94a3b8', '#f59e0b', '#059669'],
             borderRadius: 8,
           }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false }
-          },
+          plugins: { legend: { display: false } },
           scales: {
-            y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
-            x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+            y: { grid: { color: '#f1ede4' }, ticks: { color: '#64748b' } },
+            x: { grid: { display: false }, ticks: { color: '#64748b' } }
           }
         }
       });
@@ -1049,7 +1689,7 @@
           datasets: [{
             label: 'Total Spend ($)',
             data: costs,
-            backgroundColor: ['#475569', '#f59e0b', '#10b981'],
+            backgroundColor: ['#94a3b8', '#f59e0b', '#059669'],
             borderRadius: 8,
           }]
         },
@@ -1057,8 +1697,8 @@
           responsive: true,
           maintainAspectRatio: false,
           scales: {
-            y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
-            x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+            y: { grid: { color: '#f1ede4' }, ticks: { color: '#64748b' } },
+            x: { grid: { display: false }, ticks: { color: '#64748b' } }
           }
         }
       });
@@ -1073,7 +1713,7 @@
           datasets: [{
             label: 'SLA Violations',
             data: violations,
-            backgroundColor: '#ef4444',
+            backgroundColor: '#f43f5e',
             borderRadius: 8,
           }]
         },
@@ -1081,14 +1721,14 @@
           responsive: true,
           maintainAspectRatio: false,
           scales: {
-            y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8', stepSize: 1 } },
-            x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+            y: { grid: { color: '#f1ede4' }, ticks: { color: '#64748b', stepSize: 1 } },
+            x: { grid: { display: false }, ticks: { color: '#64748b' } }
           }
         }
       });
     }
 
-    // 6. Load Config & IaC
+    // 6. Config / IaC
     async function loadConfig() {
       const res = await fetch(`${API}/api/config`);
       const data = await res.json();
@@ -1097,11 +1737,11 @@
       document.getElementById('k8s-code').innerText = data.kubernetes_yaml || '# None';
     }
 
-    // 7. Interactive Scaling Step Simulation
+    // 7. Interactive Step
     async function runInteractiveStep() {
       const curServers = parseInt(document.getElementById('sim-servers').value) || 3;
-      const curDemand = parseFloat(document.getElementById('sim-demand').value) || 250;
-      const curForecast = parseFloat(document.getElementById('sim-forecast').value) || 320;
+      const curDemand = parseFloat(document.getElementById('sim-demand').value) || 280;
+      const curForecast = parseFloat(document.getElementById('sim-forecast').value) || 360;
 
       const res = await fetch(`${API}/api/simulate-step`, {
         method: 'POST',
@@ -1123,15 +1763,25 @@
       document.getElementById('sim-out-cmd').innerText = data.kubectl_command;
       document.getElementById('sim-out-safety').innerText = data.safety_status;
 
-      // Update input servers to reflect the step
       document.getElementById('sim-servers').value = data.servers_after;
       lucide.createIcons();
     }
 
-    // Initial Load
+    // Initialize application state
     window.addEventListener('DOMContentLoaded', () => {
       lucide.createIcons();
-      loadAllData();
+
+      // Check stored user
+      const stored = localStorage.getItem('cloud_opt_user');
+      if (stored) {
+        try {
+          const user = JSON.parse(stored);
+          updateAuthState(user);
+        } catch (e) {}
+      }
+
+      // Default to landing page
+      navigateTo('landing');
     });
   </script>
 </body>

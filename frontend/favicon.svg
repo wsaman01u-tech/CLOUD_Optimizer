@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="cloudGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#059669" />
+      <stop offset="100%" stop-color="#10b981" />
+    </linearGradient>
+    <linearGradient id="leafGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34d399" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#064e3b" flood-opacity="0.15" />
+    </filter>
+  </defs>
+
+  <!-- Background rounded squircle with warm beige outline -->
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="#f5f2eb" stroke="#e6dfd1" stroke-width="2" />
+
+  <!-- Cloud Base Silhouette -->
+  <path d="M46 38H18a10 10 0 0 1-1.3-19.9 14 14 0 0 1 27.6-3.8A10 10 0 0 1 46 38z" fill="url(#cloudGrad)" filter="url(#shadow)" />
+
+  <!-- Eco Leaf / Energy Surge Core -->
+  <path d="M32 20c-5.5 0-10 4.5-10 10 0 6 7 11 10 13 3-2 10-7 10-13 0-5.5-4.5-10-10-10z" fill="#ecfdf5" opacity="0.95" />
+  <path d="M32 23c-3.8 0-7 3.1-7 7 0 4.2 4.9 7.7 7 9.1 2.1-1.4 7-4.9 7-9.1 0-3.9-3.2-7-7-7z" fill="url(#leafGrad)" />
+
+  <!-- Autonomous Spark / Lightning Node in center -->
+  <path d="M33 26l-3.5 4.5h3l-1.5 5.5 4.5-6h-3.2l0.7-4z" fill="#fef08a" stroke="#ca8a04" stroke-width="0.5" stroke-linejoin="round" />
+</svg>
