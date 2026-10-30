@@ -3186,7 +3186,8 @@
 
     // 2. Load Suggestions
     async function loadSuggestions() {
-      const isDemo = isDemoUser();
+      try {
+        const isDemo = isDemoUser();
       const hasData = isDemo || realUserHasData();
       const container = document.getElementById('suggestions-container');
       const emptyState = document.getElementById('suggestions-empty');
@@ -3471,7 +3472,8 @@
 
     // 3. Load My Servers
     async function loadServers() {
-      const isDemo = isDemoUser();
+      try {
+        const isDemo = isDemoUser();
       const hasData = isDemo || realUserHasData();
       const tbody = document.getElementById('servers-table-body');
       const whatifSelect = document.getElementById('whatif-server-select');
