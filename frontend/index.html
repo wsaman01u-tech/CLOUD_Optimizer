@@ -2597,6 +2597,8 @@
         try { firebaseAuth.signOut(); } catch (e) { }
       }
       currentUser = { ...GUEST_USER };
+      cachedServers = [];
+      cachedRecommendations = [];
       saveUserSession(currentUser);
       syncUserUI();
       closeUserProfileModal();
@@ -2677,6 +2679,22 @@
       if (box) {
         if (show) box.classList.remove('hidden');
         else box.classList.add('hidden');
+      }
+
+      // Update visual border styles on choice cards
+      const demoRadio = document.querySelector('input[name="wizard-data-choice"][value="demo"]');
+      const uploadRadio = document.querySelector('input[name="wizard-data-choice"][value="upload"]');
+      const demoLabel = demoRadio?.closest('label');
+      const uploadLabel = uploadRadio?.closest('label');
+
+      if (demoLabel && uploadLabel) {
+        if (show) {
+          demoLabel.className = 'block p-4 rounded-2xl border border-cream-300 hover:border-cream-400 cursor-pointer transition flex items-start gap-3';
+          uploadLabel.className = 'block p-4 rounded-2xl border-2 border-sage-500 bg-sage-50/60 cursor-pointer transition flex items-start gap-3';
+        } else {
+          demoLabel.className = 'block p-4 rounded-2xl border-2 border-sage-500 bg-sage-50/60 cursor-pointer transition flex items-start gap-3';
+          uploadLabel.className = 'block p-4 rounded-2xl border border-cream-300 hover:border-cream-400 cursor-pointer transition flex items-start gap-3';
+        }
       }
     }
 
@@ -3005,6 +3023,8 @@
             if (currentUser && currentUser.email) {
               localStorage.removeItem('cloudopt_user_fleet_' + currentUser.email);
             }
+            cachedServers = [];
+            cachedRecommendations = [];
             currentUser.hasUploadedData = false;
             saveUserSession(currentUser);
             showToast('Fleet Cleared', 'Your cloud data has been removed from this account.', true);
@@ -3092,6 +3112,7 @@
         saveUserSession(currentUser);
 
         showToast('Data Cleaned & Ingested', `Normalized ${dataResult.summary?.total_resources} resources across ${providersList}.`, true);
+        logClientAuditEvent('DATA_INGESTION', file.name, 'Normalize & ingest telemetry', 0, currentUser?.name, `Normalized ${dataResult.summary?.total_resources} resources across ${providersList}`);
 
         // Immediately update all dashboard components with new normalized telemetry
         await Promise.all([
@@ -3239,6 +3260,12 @@
         loadServers();
       } else if (tabId === 'suggestions') {
         loadSuggestions();
+      } else if (tabId === 'whatif') {
+        if (!cachedServers || cachedServers.length === 0) {
+          loadServers();
+        } else {
+          runWhatIfSimulation();
+        }
       }
 
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -3283,6 +3310,19 @@
     }
 
     function changeWizardStep(delta) {
+      if (delta > 0 && wizardCurrentStep === 1) {
+        const dataChoice = document.querySelector('input[name="wizard-data-choice"]:checked')?.value || 'demo';
+        if (dataChoice === 'upload') {
+          const fileInput = document.getElementById('wizard-file-input');
+          const hasUploaded = currentUser && (currentUser.hasUploadedData || getLocalUserFleet().length > 0);
+          if (!fileInput?.files?.length && !hasUploaded) {
+            showToast('Select File', 'Please select a CSV, Excel (.xlsx), or JSON file to upload, or switch to Multi-Cloud Demo Data.', false);
+            toggleWizardUploadZone(true);
+            return;
+          }
+        }
+      }
+
       wizardCurrentStep += delta;
       if (wizardCurrentStep > 3) {
         saveGuidedStartChoices();
@@ -4327,6 +4367,7 @@
         const rec = (cachedRecommendations || []).find(r => r.id === recId);
         if (rec) {
           rec.status = 'Approved';
+          logClientAuditEvent('APPROVED', rec.resource_id, rec.action || 'Approve Rightsizing', rec.monthly_saving, currentUser.name, 'Approved by operator');
           showToast('Approved', `Recommendation ${recId} is approved. Head to "Apply & Undo" to execute.`, true);
           loadSuggestions();
           loadApplyList();
@@ -4392,6 +4433,7 @@
             if ((r.risk_level || '').toLowerCase() === 'low') {
               r.status = 'Approved';
               count++;
+              logClientAuditEvent('APPROVED', r.resource_id, r.action || 'Batch Approve', r.monthly_saving, currentUser.name, '1-Click Low-Risk Batch Approve');
             }
           });
           showToast('Approved', `Approved ${count} low-risk suggestions. Head to "Apply & Undo" to execute.`, true);
@@ -4654,10 +4696,10 @@
           const seasonal = Math.sin((idx / 7) * Math.PI * 2) * 5;
           const pred = Math.max(2, Math.min(95, Math.round((baseCpu + seasonal) * 10) / 10));
           return {
-            ds: `${day} 12:00`,
-            yhat: pred,
-            yhat_lower: Math.max(0, Math.round((pred - 4) * 10) / 10),
-            yhat_upper: Math.min(100, Math.round((pred + 7) * 10) / 10)
+            timestamp: `${day} 12:00`,
+            mid: pred,
+            lower: Math.max(0, Math.round((pred - 4) * 10) / 10),
+            upper: Math.min(100, Math.round((pred + 7) * 10) / 10)
           };
         });
         busiestTime = `Expected peak: ${days[2]} 2:00 PM (${Math.round(peakCpu)}% CPU)`;
@@ -4708,10 +4750,10 @@
       if (forecastChartInstance) forecastChartInstance.destroy();
 
       const ctx = document.getElementById('serverForecastChart').getContext('2d');
-      const labels = points.map(p => p.timestamp);
-      const midData = points.map(p => p.mid);
-      const lowerData = points.map(p => p.lower);
-      const upperData = points.map(p => p.upper);
+      const labels = points.map(p => p.timestamp || p.ds || p.time || '--');
+      const midData = points.map(p => p.mid !== undefined ? p.mid : (p.yhat !== undefined ? p.yhat : (p.cpu || 0)));
+      const lowerData = points.map(p => p.lower !== undefined ? p.lower : (p.yhat_lower !== undefined ? p.yhat_lower : Math.max(0, (p.mid || 0) * 0.9)));
+      const upperData = points.map(p => p.upper !== undefined ? p.upper : (p.yhat_upper !== undefined ? p.yhat_upper : Math.min(100, (p.mid || 0) * 1.2)));
 
       forecastChartInstance = new Chart(ctx, {
         type: 'line',
@@ -4877,8 +4919,18 @@
         const cpuCmp = document.getElementById('whatif-cpu-compare');
         if (cpuCmp) cpuCmp.innerText = `${data.current_peak_cpu}% → ${data.predicted_peak_cpu}%`;
 
+        const bufPill = document.getElementById('whatif-buffer-pill');
+        if (bufPill) {
+          const headroom = Math.max(0, data.safe_cpu_limit - data.predicted_peak_cpu);
+          bufPill.innerText = data.is_safe ? `${headroom.toFixed(1)}% headroom remaining` : 'Exceeds safe threshold';
+          bufPill.className = data.is_safe ? 'text-[11px] font-semibold text-emerald-700' : 'text-[11px] font-semibold text-rose-600';
+        }
+
         const limVal = document.getElementById('whatif-limit-val');
         if (limVal) limVal.innerText = `${data.safe_cpu_limit}%`;
+
+        const limRule = document.getElementById('whatif-safe-limit-text');
+        if (limRule) limRule.innerText = `${data.safe_cpu_limit}%`;
 
         const explText = document.getElementById('whatif-explanation-text');
         if (explText) explText.innerText = data.explanation;
@@ -4926,6 +4978,7 @@
           // Apply changes to cachedRecommendations and cachedServers
           approved.forEach(rec => {
             rec.status = 'Applied';
+            logClientAuditEvent('APPLIED', rec.resource_id, rec.action || 'Apply Rightsizing', rec.monthly_saving, currentUser?.name, 'Executed approved change with verification');
             const s = (cachedServers || []).find(srv => srv.resource_id === rec.resource_id);
             if (s) {
               if (s.original_cost === undefined) s.original_cost = Number(s.monthly_cost) || 0;
@@ -4974,6 +5027,7 @@
           if (applied.length > 0) {
             const lastRec = applied[applied.length - 1];
             lastRec.status = 'Approved';
+            logClientAuditEvent('ROLLED_BACK', lastRec.resource_id, 'Undo Rollback', lastRec.monthly_saving, currentUser?.name, 'Operator rolled back action');
 
             // Roll back matching server in cachedServers
             const s = (cachedServers || []).find(srv => srv.resource_id === lastRec.resource_id);
@@ -5103,59 +5157,112 @@
       };
 
       try {
-        const res = await fetch(`${API}/api/v2/rules`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-        if (res.ok) {
-          showToast('Settings Saved', 'Updated rules.yaml and refreshed recommendations.');
-          refreshAllData();
+        if (API) {
+          const res = await fetch(`${API}/api/v2/rules`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          if (res.ok) {
+            showToast('Settings Saved', 'Updated rules.yaml and refreshed recommendations.');
+            refreshAllData();
+            return;
+          }
         }
       } catch (e) {
-        console.error(e);
+        console.warn("Backend settings offline, saving client configuration");
       }
+
+      // Client-side fallback
+      localStorage.setItem('cloudopt_preset', preset);
+      localStorage.setItem('cloudopt_mode', mode);
+      localStorage.setItem('cloudopt_budget', budget);
+      localStorage.setItem('cloudopt_rules', JSON.stringify(payload));
+      showToast('Settings Saved', `Saved ${preset} style in ${mode} mode.`);
+      const sidePreset = document.getElementById('sidebar-preset-pill');
+      if (sidePreset) sidePreset.innerText = preset;
+      const sideMode = document.getElementById('sidebar-mode-pill');
+      if (sideMode) sideMode.innerText = mode;
+      refreshAllData();
+    }
+
+    function logClientAuditEvent(eventType, resourceId, action, monthlySaving, actor, reason) {
+      try {
+        let logs = [];
+        const saved = localStorage.getItem('cloudopt_audit_logs');
+        if (saved) {
+          try { logs = JSON.parse(saved); } catch (e) {}
+        }
+        const now = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+        logs.push({
+          timestamp: now,
+          event_type: eventType,
+          resource_id: resourceId,
+          action: action,
+          monthly_saving: monthlySaving,
+          actor: actor || (currentUser?.name || 'Operator'),
+          reason: reason || ''
+        });
+        localStorage.setItem('cloudopt_audit_logs', JSON.stringify(logs));
+      } catch (e) {}
     }
 
     // 7. History Timeline
     async function loadHistory() {
+      let logs = [];
       try {
-        const res = await fetch(`${API}/api/v2/history`);
-        if (!res.ok) throw new Error('Failed to load history');
-        const logs = await res.json();
-
-        const tbody = document.getElementById('history-table-body');
-        tbody.innerHTML = '';
-
-        if (!logs || logs.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="7" class="px-5 py-6 text-center text-slate-400 font-sans">No audit events logged yet. Actions taken will appear here.</td></tr>';
-          return;
+        if (API) {
+          const res = await fetch(`${API}/api/v2/history`);
+          if (res.ok) {
+            const apiLogs = await res.json();
+            if (Array.isArray(apiLogs) && apiLogs.length > 0) logs = apiLogs;
+          }
         }
-
-        logs.slice().reverse().forEach(row => {
-          const tr = document.createElement('tr');
-          tr.className = 'hover:bg-cream-50/70 transition';
-
-          let evColor = 'text-slate-600';
-          if (row.event_type === 'APPLIED') evColor = 'text-emerald-700 font-bold';
-          else if (row.event_type === 'ROLLED_BACK') evColor = 'text-rose-700 font-bold';
-          else if (row.event_type === 'APPROVED') evColor = 'text-sage-700 font-semibold';
-
-          tr.innerHTML = `
-            <td class="px-5 py-3 text-slate-500 whitespace-nowrap">${row.timestamp || '--'}</td>
-            <td class="px-5 py-3 ${evColor}">${row.event_type || '--'}</td>
-            <td class="px-5 py-3 font-bold text-slate-900">${row.resource_id || '--'}</td>
-            <td class="px-5 py-3">${row.action || '--'}</td>
-            <td class="px-5 py-3">${row.monthly_saving ? `$${Number(row.monthly_saving).toFixed(2)}/mo` : '--'}</td>
-            <td class="px-5 py-3 text-slate-600">${row.actor || 'System'}</td>
-            <td class="px-5 py-3 font-sans text-slate-600">${row.reason || ''}</td>
-          `;
-
-          tbody.appendChild(tr);
-        });
       } catch (e) {
-        console.error('Error loading history:', e);
+        console.warn('Backend history offline, reading client audit trail');
       }
+
+      if (!logs || logs.length === 0) {
+        const saved = localStorage.getItem('cloudopt_audit_logs');
+        if (saved) {
+          try { logs = JSON.parse(saved); } catch (e) {}
+        }
+      }
+
+      if (!logs || logs.length === 0) {
+        // Initial sample events
+        logs = [
+          { timestamp: "2026-10-30 14:10:00 UTC", event_type: "APPLIED", resource_id: "ec2-test-worker-03", action: "Stop Instance", monthly_saving: 60.74, actor: "Autopilot", reason: "Automated idle server shutdown" },
+          { timestamp: "2026-10-30 11:35:00 UTC", event_type: "APPLIED", resource_id: "azure-disk-analytics-bak", action: "Snapshot & Delete", monthly_saving: 135.00, actor: "Operator", reason: "Removed 45-day unattached premium SSD" },
+          { timestamp: "2026-10-29 09:20:00 UTC", event_type: "APPROVED", resource_id: "gcp-gke-prod-pool-01", action: "Downsize Node Pool", monthly_saving: 118.50, actor: "Cloud Lead", reason: "Approved low-risk rightsizing change" }
+        ];
+      }
+
+      const tbody = document.getElementById('history-table-body');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      logs.slice().reverse().forEach(row => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-cream-50/70 transition';
+
+        let evColor = 'text-slate-600';
+        if (row.event_type === 'APPLIED') evColor = 'text-emerald-700 font-bold';
+        else if (row.event_type === 'ROLLED_BACK') evColor = 'text-rose-700 font-bold';
+        else if (row.event_type === 'APPROVED') evColor = 'text-sage-700 font-semibold';
+
+        tr.innerHTML = `
+          <td class="px-5 py-3 text-slate-500 whitespace-nowrap">${row.timestamp || '--'}</td>
+          <td class="px-5 py-3 ${evColor}">${row.event_type || '--'}</td>
+          <td class="px-5 py-3 font-bold text-slate-900">${row.resource_id || '--'}</td>
+          <td class="px-5 py-3">${row.action || '--'}</td>
+          <td class="px-5 py-3">${row.monthly_saving ? `$${Number(row.monthly_saving).toFixed(2)}/mo` : '--'}</td>
+          <td class="px-5 py-3 text-slate-600">${row.actor || 'System'}</td>
+          <td class="px-5 py-3 font-sans text-slate-600">${row.reason || ''}</td>
+        `;
+
+        tbody.appendChild(tr);
+      });
     }
 
     // Master Refresh
